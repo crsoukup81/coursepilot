@@ -31,10 +31,7 @@
 
         body {
             margin: 0;
-            font-family:
-                Inter,
-                Arial,
-                sans-serif;
+            font-family: Inter, Arial, sans-serif;
             color: var(--text);
             background: var(--background);
         }
@@ -47,6 +44,16 @@
 
         button {
             cursor: pointer;
+        }
+
+        fieldset {
+            margin: 0;
+            padding: 0;
+            border: none;
+        }
+
+        fieldset:disabled {
+            opacity: 0.65;
         }
 
         .site-header {
@@ -94,13 +101,13 @@
         }
 
         .hero {
+            color: white;
             background:
                 linear-gradient(
                     135deg,
                     rgba(18, 61, 43, 0.98),
                     rgba(27, 94, 32, 0.9)
                 );
-            color: white;
         }
 
         .hero-content {
@@ -183,7 +190,9 @@
 
         .booking-layout {
             display: grid;
-            grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.75fr);
+            grid-template-columns:
+                minmax(0, 1.45fr)
+                minmax(280px, 0.75fr);
             gap: 24px;
             align-items: start;
         }
@@ -217,7 +226,8 @@
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
             gap: 20px;
         }
 
@@ -253,12 +263,15 @@
         input:focus,
         select:focus {
             border-color: var(--green);
-            box-shadow: 0 0 0 3px rgba(27, 94, 32, 0.12);
+            box-shadow:
+                0 0 0 3px
+                rgba(27, 94, 32, 0.12);
         }
 
         .player-options {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns:
+                repeat(4, minmax(0, 1fr));
             gap: 10px;
         }
 
@@ -471,7 +484,8 @@
             }
 
             .player-options {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
             }
 
             .assistant-input-row {
@@ -515,9 +529,9 @@
             </h1>
 
             <p class="hero-description">
-                Choose your preferred date, tee time, and group size.
-                The golf course will review the request and confirm
-                availability.
+                Choose your preferred date, tee time, and group
+                size. The golf course will review the request and
+                confirm availability.
             </p>
 
             <button
@@ -532,23 +546,35 @@
         <div class="hero-features">
 
             <div class="feature-item">
-                <strong>Structured tee-time requests</strong>
+                <strong>
+                    Course-specific booking rules
+                </strong>
+
                 <span>
-                    No invalid dates, times, or oversized groups.
+                    Available times and group sizes load directly
+                    from the golf course settings.
                 </span>
             </div>
 
             <div class="feature-item">
-                <strong>Course-approved time windows</strong>
+                <strong>
+                    Structured tee-time requests
+                </strong>
+
                 <span>
-                    Request times from 8:04 AM through 6:20 PM.
+                    Invalid dates, times, and oversized groups are
+                    rejected.
                 </span>
             </div>
 
             <div class="feature-item">
-                <strong>Fast manager follow-up</strong>
+                <strong>
+                    Fast manager follow-up
+                </strong>
+
                 <span>
-                    Requests are sent directly to the CoursePilot dashboard.
+                    Requests are sent directly to the CoursePilot
+                    dashboard.
                 </span>
             </div>
 
@@ -571,159 +597,123 @@
 
                 <p>
                     Complete the form below. This submits a request
-                    and does not guarantee that the selected time is available.
+                    and does not guarantee that the selected time is
+                    available.
                 </p>
             </div>
 
             <form id="bookingForm">
 
-                <div class="form-grid">
+                <fieldset id="bookingFields" disabled>
 
-                    <div class="form-group">
-                        <label for="bookingDate">
-                            Date
-                        </label>
+                    <div class="form-grid">
 
-                        <input
-                            id="bookingDate"
-                            name="bookingDate"
-                            type="date"
-                            required
-                        >
-                    </div>
+                        <div class="form-group">
+                            <label for="bookingDate">
+                                Date
+                            </label>
 
-                    <div class="form-group">
-                        <label for="bookingTime">
-                            Preferred tee time
-                        </label>
+                            <input
+                                id="bookingDate"
+                                name="bookingDate"
+                                type="date"
+                                required
+                            >
+                        </div>
 
-                        <select
-                            id="bookingTime"
-                            name="bookingTime"
-                            required
-                        >
-                            <option value="">
-                                Select a time
-                            </option>
-                        </select>
+                        <div class="form-group">
+                            <label for="bookingTime">
+                                Preferred tee time
+                            </label>
 
-                        <p class="field-note">
-                            Times are available in 8-minute intervals.
-                        </p>
-                    </div>
+                            <select
+                                id="bookingTime"
+                                name="bookingTime"
+                                required
+                            >
+                                <option value="">
+                                    Loading times...
+                                </option>
+                            </select>
 
-                    <div class="form-group full-width">
+                            <p
+                                id="timeIntervalNote"
+                                class="field-note"
+                            >
+                                Loading course settings...
+                            </p>
+                        </div>
 
-                        <span class="field-label">
-                            Number of golfers
-                        </span>
+                        <div class="form-group full-width">
 
-                        <div class="player-options">
+                            <span class="field-label">
+                                Number of golfers
+                            </span>
 
-                            <div class="player-option">
-                                <input
-                                    id="players1"
-                                    name="players"
-                                    type="radio"
-                                    value="1"
-                                    required
-                                >
-
-                                <label for="players1">
-                                    1
-                                </label>
-                            </div>
-
-                            <div class="player-option">
-                                <input
-                                    id="players2"
-                                    name="players"
-                                    type="radio"
-                                    value="2"
-                                >
-
-                                <label for="players2">
-                                    2
-                                </label>
-                            </div>
-
-                            <div class="player-option">
-                                <input
-                                    id="players3"
-                                    name="players"
-                                    type="radio"
-                                    value="3"
-                                >
-
-                                <label for="players3">
-                                    3
-                                </label>
-                            </div>
-
-                            <div class="player-option">
-                                <input
-                                    id="players4"
-                                    name="players"
-                                    type="radio"
-                                    value="4"
-                                >
-
-                                <label for="players4">
-                                    4
-                                </label>
-                            </div>
+                            <div
+                                id="playerOptions"
+                                class="player-options"
+                            ></div>
 
                         </div>
+
+                        <div class="form-group">
+                            <label for="customerName">
+                                Name
+                            </label>
+
+                            <input
+                                id="customerName"
+                                name="customerName"
+                                type="text"
+                                minlength="2"
+                                maxlength="100"
+                                placeholder="Your full name"
+                                autocomplete="name"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="customerPhone">
+                                Phone number
+                            </label>
+
+                            <input
+                                id="customerPhone"
+                                name="customerPhone"
+                                type="tel"
+                                inputmode="numeric"
+                                maxlength="12"
+                                placeholder="616-555-1234"
+                                autocomplete="tel"
+                                required
+                            >
+
+                            <p class="field-note">
+                                Enter a 10-digit U.S. phone number.
+                            </p>
+                        </div>
+
                     </div>
 
-                    <div class="form-group">
-                        <label for="customerName">
-                            Name
-                        </label>
+                    <button
+                        id="submitButton"
+                        class="submit-button"
+                        type="submit"
+                    >
+                        Submit Booking Request
+                    </button>
 
-                        <input
-                            id="customerName"
-                            name="customerName"
-                            type="text"
-                            minlength="2"
-                            maxlength="100"
-                            placeholder="Your full name"
-                            autocomplete="name"
-                            required
-                        >
-                    </div>
-
-                    <div class="form-group">
-                        <label for="customerPhone">
-                            Phone number
-                        </label>
-
-                        <input
-                            id="customerPhone"
-                            name="customerPhone"
-                            type="tel"
-                            maxlength="30"
-                            placeholder="616-555-1234"
-                            autocomplete="tel"
-                            required
-                        >
-                    </div>
-
-                </div>
-
-                <button
-                    id="submitButton"
-                    class="submit-button"
-                    type="submit"
-                >
-                    Submit Booking Request
-                </button>
+                </fieldset>
 
                 <p
                     id="bookingMessage"
                     class="form-message"
                     aria-live="polite"
-                ></p>
+                >
+                    Loading course settings...
+                </p>
 
             </form>
 
@@ -780,7 +770,8 @@
 
                 <p class="request-warning">
                     This is a tee-time request. The golf course must
-                    confirm availability before the reservation is final.
+                    confirm availability before the reservation is
+                    final.
                 </p>
 
             </section>
@@ -836,18 +827,24 @@
 
     import { supabase } from "./supabase.js";
 
-    // This is a public course identifier, not a secret credential.
+    // Public course identifier. This is not a secret.
     const COURSE_ID =
         "d82c7906-bf56-4103-b9af-a726f45ae36e";
 
     const bookingForm =
         document.getElementById("bookingForm");
 
+    const bookingFields =
+        document.getElementById("bookingFields");
+
     const bookingDate =
         document.getElementById("bookingDate");
 
     const bookingTime =
         document.getElementById("bookingTime");
+
+    const playerOptions =
+        document.getElementById("playerOptions");
 
     const customerName =
         document.getElementById("customerName");
@@ -860,6 +857,9 @@
 
     const bookingMessage =
         document.getElementById("bookingMessage");
+
+    const timeIntervalNote =
+        document.getElementById("timeIntervalNote");
 
     const summaryDate =
         document.getElementById("summaryDate");
@@ -885,22 +885,47 @@
     const bookingSection =
         document.getElementById("bookingSection");
 
+    let courseSettings = null;
 
-    function getTodayLocalDate() {
-        const today = new Date();
 
-        const year =
-            today.getFullYear();
+    function parseTimeToMinutes(timeValue) {
+        const match =
+            /^(\d{2}):(\d{2})/.exec(timeValue || "");
 
-        const month =
-            String(today.getMonth() + 1)
-                .padStart(2, "0");
+        if (!match) {
+            return null;
+        }
 
-        const day =
-            String(today.getDate())
-                .padStart(2, "0");
+        const hours =
+            Number(match[1]);
 
-        return `${year}-${month}-${day}`;
+        const minutes =
+            Number(match[2]);
+
+        if (
+            hours < 0 ||
+            hours > 23 ||
+            minutes < 0 ||
+            minutes > 59
+        ) {
+            return null;
+        }
+
+        return (hours * 60) + minutes;
+    }
+
+
+    function formatTimeValue(totalMinutes) {
+        const hours =
+            Math.floor(totalMinutes / 60);
+
+        const minutes =
+            totalMinutes % 60;
+
+        return (
+            `${String(hours).padStart(2, "0")}:` +
+            `${String(minutes).padStart(2, "0")}`
+        );
     }
 
 
@@ -927,31 +952,80 @@
     }
 
 
-    function formatTimeValue(totalMinutes) {
-        const hours =
-            Math.floor(totalMinutes / 60);
+    function getTodayInTimeZone(timeZone) {
+        const formatter =
+            new Intl.DateTimeFormat(
+                "en-US",
+                {
+                    timeZone,
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit"
+                }
+            );
 
-        const minutes =
-            totalMinutes % 60;
+        const parts =
+            formatter.formatToParts(new Date());
+
+        const values = {};
+
+        for (const part of parts) {
+            if (
+                part.type === "year" ||
+                part.type === "month" ||
+                part.type === "day"
+            ) {
+                values[part.type] = part.value;
+            }
+        }
 
         return (
-            `${String(hours).padStart(2, "0")}:` +
-            `${String(minutes).padStart(2, "0")}`
+            `${values.year}-` +
+            `${values.month}-` +
+            `${values.day}`
         );
     }
 
 
     function createTeeTimeOptions() {
         const startMinutes =
-            (8 * 60) + 4;
+            parseTimeToMinutes(
+                courseSettings.booking_start_time
+            );
 
         const endMinutes =
-            (18 * 60) + 20;
+            parseTimeToMinutes(
+                courseSettings.booking_end_time
+            );
+
+        const interval =
+            courseSettings.tee_interval_minutes;
+
+        if (
+            startMinutes === null ||
+            endMinutes === null ||
+            !Number.isInteger(interval) ||
+            interval < 1
+        ) {
+            throw new Error(
+                "Course tee-time settings are invalid."
+            );
+        }
+
+        bookingTime.replaceChildren();
+
+        const placeholder =
+            document.createElement("option");
+
+        placeholder.value = "";
+        placeholder.textContent = "Select a time";
+
+        bookingTime.appendChild(placeholder);
 
         for (
             let minutes = startMinutes;
             minutes <= endMinutes;
-            minutes += 8
+            minutes += interval
         ) {
             const option =
                 document.createElement("option");
@@ -963,6 +1037,63 @@
                 formatTimeForDisplay(minutes);
 
             bookingTime.appendChild(option);
+        }
+
+        timeIntervalNote.textContent =
+            `Times are offered every ${interval} minutes, ` +
+            `from ${formatTimeForDisplay(startMinutes)} ` +
+            `through ${formatTimeForDisplay(endMinutes)}.`;
+    }
+
+
+    function createPlayerOptions() {
+        playerOptions.replaceChildren();
+
+        const maxPlayers =
+            courseSettings.max_players;
+
+        if (
+            !Number.isInteger(maxPlayers) ||
+            maxPlayers < 1
+        ) {
+            throw new Error(
+                "Maximum player setting is invalid."
+            );
+        }
+
+        for (
+            let players = 1;
+            players <= maxPlayers;
+            players += 1
+        ) {
+            const wrapper =
+                document.createElement("div");
+
+            wrapper.className =
+                "player-option";
+
+            const input =
+                document.createElement("input");
+
+            input.id = `players${players}`;
+            input.name = "players";
+            input.type = "radio";
+            input.value = String(players);
+
+            if (players === 1) {
+                input.required = true;
+            }
+
+            const label =
+                document.createElement("label");
+
+            label.htmlFor = input.id;
+            label.textContent = String(players);
+
+            wrapper.appendChild(input);
+            wrapper.appendChild(label);
+
+            playerOptions.appendChild(wrapper);
         }
     }
 
@@ -1032,20 +1163,34 @@
     }
 
 
-    function isValidPhoneNumber(phoneNumber) {
-        if (
-            phoneNumber.length < 7 ||
-            phoneNumber.length > 30
-        ) {
-            return false;
+    function formatPhoneNumber(value) {
+        const digits =
+            value
+                .replace(/\D/g, "")
+                .slice(0, 10);
+
+        if (digits.length <= 3) {
+            return digits;
         }
 
-        const digitsOnly =
-            phoneNumber.replace(/\D/g, "");
+        if (digits.length <= 6) {
+            return (
+                `${digits.slice(0, 3)}-` +
+                `${digits.slice(3)}`
+            );
+        }
 
         return (
-            digitsOnly.length >= 7 &&
-            digitsOnly.length <= 15
+            `${digits.slice(0, 3)}-` +
+            `${digits.slice(3, 6)}-` +
+            `${digits.slice(6, 10)}`
+        );
+    }
+
+
+    function isValidPhoneNumber(phoneNumber) {
+        return /^\d{3}-\d{3}-\d{4}$/.test(
+            phoneNumber
         );
     }
 
@@ -1055,9 +1200,7 @@
         type = ""
     ) {
         bookingMessage.textContent = message;
-
-        bookingMessage.className =
-            "form-message";
+        bookingMessage.className = "form-message";
 
         if (type) {
             bookingMessage.classList.add(type);
@@ -1065,8 +1208,97 @@
     }
 
 
+    function isSelectedTimeValid(timeValue) {
+        return Array
+            .from(bookingTime.options)
+            .some(
+                (option) =>
+                    option.value === timeValue &&
+                    option.value !== ""
+            );
+    }
+
+
+    async function loadCourseSettings() {
+        showBookingMessage(
+            "Loading course settings..."
+        );
+
+        try {
+            const { data, error } =
+                await supabase
+                    .from("course_public_settings")
+                    .select(
+                        "timezone, booking_start_time, booking_end_time, tee_interval_minutes, max_players"
+                    )
+                    .eq("course_id", COURSE_ID)
+                    .single();
+
+            if (error) {
+                throw error;
+            }
+
+            courseSettings = {
+                timezone: data.timezone,
+
+                booking_start_time:
+                    data.booking_start_time,
+
+                booking_end_time:
+                    data.booking_end_time,
+
+                tee_interval_minutes:
+                    Number(
+                        data.tee_interval_minutes
+                    ),
+
+                max_players:
+                    Number(data.max_players)
+            };
+
+            bookingDate.min =
+                getTodayInTimeZone(
+                    courseSettings.timezone
+                );
+
+            createTeeTimeOptions();
+            createPlayerOptions();
+
+            bookingFields.disabled = false;
+
+            showBookingMessage(
+                "Course settings loaded.",
+                "success"
+            );
+
+            updateBookingSummary();
+        } catch (error) {
+            console.error(
+                "Could not load course settings:",
+                error
+            );
+
+            bookingFields.disabled = true;
+
+            showBookingMessage(
+                "Booking is temporarily unavailable because the course settings could not be loaded.",
+                "error"
+            );
+        }
+    }
+
+
     async function submitBooking(event) {
         event.preventDefault();
+
+        if (!courseSettings) {
+            showBookingMessage(
+                "Course settings are not available.",
+                "error"
+            );
+
+            return;
+        }
 
         const players =
             getSelectedPlayerCount();
@@ -1093,11 +1325,39 @@
         }
 
         if (
-            players < 1 ||
-            players > 4
+            bookingDate.value <
+            getTodayInTimeZone(
+                courseSettings.timezone
+            )
         ) {
             showBookingMessage(
-                "Groups must contain 1 through 4 golfers.",
+                "Choose a date that is today or later.",
+                "error"
+            );
+
+            return;
+        }
+
+        if (
+            !isSelectedTimeValid(
+                bookingTime.value
+            )
+        ) {
+            showBookingMessage(
+                "Choose one of the available tee times.",
+                "error"
+            );
+
+            return;
+        }
+
+        if (
+            players < 1 ||
+            players >
+                courseSettings.max_players
+        ) {
+            showBookingMessage(
+                `Groups must contain 1 through ${courseSettings.max_players} golfers.`,
                 "error"
             );
 
@@ -1118,7 +1378,7 @@
 
         if (!isValidPhoneNumber(phone)) {
             showBookingMessage(
-                "Enter a valid phone number.",
+                "Enter a complete 10-digit phone number.",
                 "error"
             );
 
@@ -1137,7 +1397,7 @@
             day: bookingDate.value,
             time: bookingTime.value,
 
-            // The current database column is still text.
+            // The database column is currently text.
             players: String(players),
 
             customer_phone: phone
@@ -1167,7 +1427,9 @@
 
             localStorage.setItem(
                 "booking",
-                JSON.stringify(bookingRequest)
+                JSON.stringify(
+                    bookingRequest
+                )
             );
 
             showBookingMessage(
@@ -1178,7 +1440,9 @@
             bookingForm.reset();
 
             bookingDate.min =
-                getTodayLocalDate();
+                getTodayInTimeZone(
+                    courseSettings.timezone
+                );
 
             updateBookingSummary();
         } catch (error) {
@@ -1251,11 +1515,15 @@
     }
 
 
-    bookingDate.min =
-        getTodayLocalDate();
-
-    createTeeTimeOptions();
-    updateBookingSummary();
+    customerPhone.addEventListener(
+        "input",
+        () => {
+            customerPhone.value =
+                formatPhoneNumber(
+                    customerPhone.value
+                );
+        }
+    );
 
 
     bookingForm.addEventListener(
@@ -1289,6 +1557,8 @@
             bookingDate.focus();
         }
     );
+
+    loadCourseSettings();
 
 </script>
 

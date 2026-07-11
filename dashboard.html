@@ -16,7 +16,7 @@
 
         .card {
             background: white;
-            width: 500px;
+            width: 700px;
             max-width: 90%;
             margin: auto;
             padding: 40px;
@@ -66,6 +66,10 @@
             text-align: left;
         }
 
+        .booking p {
+            margin: 8px 0;
+        }
+
         .message {
             margin-top: 15px;
         }
@@ -81,6 +85,11 @@
         .manager-email {
             margin-bottom: 0;
             color: #555;
+        }
+
+        .booking-status {
+            font-weight: bold;
+            text-transform: capitalize;
         }
 
         #logoutButton {
@@ -141,7 +150,7 @@
 
         <h2>Booking Requests</h2>
 
-        <div id="booking">
+        <div id="bookingArea">
             Loading bookings...
         </div>
 
@@ -181,7 +190,7 @@
         document.getElementById("logoutButton");
 
     const bookingArea =
-        document.getElementById("booking");
+        document.getElementById("bookingArea");
 
 
     function showLogin() {
@@ -189,52 +198,78 @@
         dashboardSection.hidden = true;
 
         managerEmail.textContent = "";
+        bookingArea.textContent = "";
         loginForm.reset();
     }
 
 
-    function showDashboard(email) {
+    async function showDashboard(email) {
         loginSection.hidden = true;
         dashboardSection.hidden = false;
 
         managerEmail.textContent =
             `Signed in as ${email}`;
 
-        renderTemporaryBooking();
+        await loadBookings();
     }
 
 
-    function addBookingField(container, label, value) {
-        const paragraph = document.createElement("p");
-        const strong = document.createElement("strong");
+    function addBookingField(
+        container,
+        label,
+        value
+    ) {
+        const paragraph =
+            document.createElement("p");
+
+        const strong =
+            document.createElement("strong");
 
         strong.textContent = `${label}: `;
+
         paragraph.appendChild(strong);
+
         paragraph.appendChild(
-            document.createTextNode(value || "Not provided")
+            document.createTextNode(
+                value || "Not provided"
+            )
         );
 
         container.appendChild(paragraph);
     }
 
 
-    function renderTemporaryBooking() {
+    function formatSubmittedAt(createdAt) {
+        if (!createdAt) {
+            return "Unknown";
+        }
+
+        const submittedDate =
+            new Date(createdAt);
+
+        if (
+            Number.isNaN(
+                submittedDate.getTime()
+            )
+        ) {
+            return "Unknown";
+        }
+
+        return submittedDate.toLocaleString();
+    }
+
+
+    function renderBookings(bookings) {
         bookingArea.replaceChildren();
 
-        const savedBooking =
-            localStorage.getItem("booking");
-
-        if (!savedBooking) {
+        if (bookings.length === 0) {
             bookingArea.textContent =
                 "No booking requests yet.";
 
             return;
         }
 
-        try {
-            const booking =
-                JSON.parse(savedBooking);
-
+        for (const booking of bookings) {
             const bookingCard =
                 document.createElement("div");
 
@@ -264,15 +299,90 @@
                 booking.players
             );
 
-            bookingArea.appendChild(bookingCard);
+            addBookingField(
+                bookingCard,
+                "Submitted",
+                formatSubmittedAt(
+                    booking.created_at
+                )
+            );
+
+            const statusParagraph =
+                document.createElement("p");
+
+            const statusLabel =
+                document.createElement("strong");
+
+            const statusValue =
+                document.createElement("span");
+
+            statusLabel.textContent =
+                "Status: ";
+
+            statusValue.className =
+                "booking-status";
+
+            statusValue.textContent =
+                booking.status || "pending";
+
+            statusParagraph.appendChild(
+                statusLabel
+            );
+
+            statusParagraph.appendChild(
+                statusValue
+            );
+
+            bookingCard.appendChild(
+                statusParagraph
+            );
+
+            bookingArea.appendChild(
+                bookingCard
+            );
+        }
+    }
+
+
+    async function loadBookings() {
+        bookingArea.textContent =
+            "Loading bookings...";
+
+        try {
+            const { data, error } =
+                await supabase
+                    .from("bookings")
+                    .select(
+                        "id, name, day, time, players, status, created_at, course_id"
+                    )
+                    .order(
+                        "created_at",
+                        {
+                            ascending: false
+                        }
+                    );
+
+            if (error) {
+                console.error(
+                    "Supabase booking load error:",
+                    error
+                );
+
+                bookingArea.textContent =
+                    "Bookings could not be loaded.";
+
+                return;
+            }
+
+            renderBookings(data || []);
         } catch (error) {
             console.error(
-                "Could not read temporary booking:",
+                "Unexpected booking load error:",
                 error
             );
 
             bookingArea.textContent =
-                "The saved booking could not be displayed.";
+                "An unexpected error occurred while loading bookings.";
         }
     }
 
@@ -287,15 +397,20 @@
             passwordInput.value;
 
         loginButton.disabled = true;
-        loginMessage.className = "message";
-        loginMessage.textContent = "Signing in...";
+
+        loginMessage.className =
+            "message";
+
+        loginMessage.textContent =
+            "Signing in...";
 
         try {
             const { data, error } =
-                await supabase.auth.signInWithPassword({
-                    email,
-                    password
-                });
+                await supabase.auth
+                    .signInWithPassword({
+                        email,
+                        password
+                    });
 
             if (error) {
                 loginMessage.className =
@@ -314,7 +429,7 @@
 
             loginMessage.textContent = "";
 
-            showDashboard(
+            await showDashboard(
                 data.user.email || email
             );
         } catch (error) {
@@ -372,7 +487,7 @@
         }
 
         if (data.session) {
-            showDashboard(
+            await showDashboard(
                 data.session.user.email ||
                 "Manager"
             );

@@ -96,6 +96,9 @@
 
     import { supabase } from "./supabase.js";
 
+    // Public ID for the CoursePilot demo golf course.
+    const COURSE_ID = "d82c7906-bf56-4103-b9af-a726f45ae36e";
+
     // Tracks which question the receptionist is currently asking.
     let bookingStep = 0;
 
@@ -160,6 +163,7 @@
                 .from("bookings")
                 .insert([
                     {
+                        course_id: COURSE_ID,
                         name: bookingInfo.name,
                         day: bookingInfo.day,
                         time: bookingInfo.time,
@@ -176,8 +180,7 @@
                 return;
             }
 
-            // Keep this temporary browser copy so the current dashboard
-            // continues working until it is connected to Supabase.
+            // Temporary browser copy for the current dashboard.
             localStorage.setItem(
                 "booking",
                 JSON.stringify(bookingInfo)
@@ -240,7 +243,7 @@
         inputElement.value = "";
     }
 
-    // Inline HTML buttons need these functions attached to the browser window.
+    // Makes the functions available to the inline HTML buttons.
     window.startDemo = startDemo;
     window.reply = reply;
 

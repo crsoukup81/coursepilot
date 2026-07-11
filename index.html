@@ -982,6 +982,14 @@
             letter-spacing: -0.04em;
         }
 
+        .summary-tax-note {
+            margin: 9px 0 0;
+            font-size: 11px;
+            line-height: 1.5;
+            text-align: right;
+            color: var(--muted);
+        }
+
         .request-warning {
             margin: 17px 0 0;
             padding: 13px;
@@ -1357,8 +1365,10 @@
                                         </span>
 
                                         <span class="hole-price">
-                                            <strong>$29</strong>
-                                            <span>per golfer</span>
+                                            <strong id="price9Label">—</strong>
+                                            <span id="price9TaxLabel">
+                                                Loading price
+                                            </span>
                                         </span>
                                     </label>
                                 </div>
@@ -1378,16 +1388,20 @@
                                         </span>
 
                                         <span class="hole-price">
-                                            <strong>$49</strong>
-                                            <span>per golfer</span>
+                                            <strong id="price18Label">—</strong>
+                                            <span id="price18TaxLabel">
+                                                Loading price
+                                            </span>
                                         </span>
                                     </label>
                                 </div>
                             </div>
 
-                            <p class="field-note">
-                                Demo pricing is shown for the mock course.
-                                Final pricing may vary.
+                            <p
+                                id="pricingNote"
+                                class="field-note"
+                            >
+                                Loading course pricing and tax settings...
                             </p>
                         </div>
 
@@ -1506,9 +1520,18 @@
                 </div>
 
                 <div class="summary-price-row">
-                    <span class="summary-price-label">Estimated total</span>
+                    <span class="summary-price-label">
+                        Estimated total after tax
+                    </span>
                     <span id="summaryPrice" class="price-value">—</span>
                 </div>
+
+                <p
+                    id="summaryTaxNote"
+                    class="summary-tax-note"
+                >
+                    Select golfers and a round to calculate pricing.
+                </p>
 
                 <p class="request-warning">
                     This demo checks mock availability. The course must
@@ -1562,11 +1585,6 @@
     const COURSE_ID =
         "d82c7906-bf56-4103-b9af-a726f45ae36e";
 
-    const MOCK_PRICE_PER_PLAYER = {
-        9: 29,
-        18: 49
-    };
-
     const bookingForm =
         document.getElementById("bookingForm");
 
@@ -1614,6 +1632,24 @@
 
     const summaryPrice =
         document.getElementById("summaryPrice");
+
+    const summaryTaxNote =
+        document.getElementById("summaryTaxNote");
+
+    const price9Label =
+        document.getElementById("price9Label");
+
+    const price9TaxLabel =
+        document.getElementById("price9TaxLabel");
+
+    const price18Label =
+        document.getElementById("price18Label");
+
+    const price18TaxLabel =
+        document.getElementById("price18TaxLabel");
+
+    const pricingNote =
+        document.getElementById("pricingNote");
 
     const assistantForm =
         document.getElementById("assistantForm");
@@ -1805,27 +1841,163 @@
     }
 
 
-    function getEstimatedPrice(players, holes) {
+    function getPricePerPlayer(holes) {
+        if (!courseSettings) {
+            return null;
+        }
+
+        if (holes === 9) {
+            return courseSettings.price_9_holes;
+        }
+
+        if (holes === 18) {
+            return courseSettings.price_18_holes;
+        }
+
+        return null;
+    }
+
+
+    function getPricingBreakdown(players, holes) {
+        const pricePerPlayer =
+            getPricePerPlayer(holes);
+
         if (
             !Number.isInteger(players) ||
-            !MOCK_PRICE_PER_PLAYER[holes]
+            players < 1 ||
+            !Number.isFinite(pricePerPlayer) ||
+            !courseSettings ||
+            !Number.isFinite(
+                courseSettings.sales_tax_rate
+            )
         ) {
             return null;
         }
 
-        return players * MOCK_PRICE_PER_PLAYER[holes];
+        const subtotal =
+            Number(
+                (
+                    players *
+                    pricePerPlayer
+                ).toFixed(2)
+            );
+
+        const taxAmount =
+            Number(
+                (
+                    subtotal *
+                    courseSettings.sales_tax_rate
+                ).toFixed(2)
+            );
+
+        const totalAfterTax =
+            Number(
+                (
+                    subtotal +
+                    taxAmount
+                ).toFixed(2)
+            );
+
+        const perPlayerAfterTax =
+            Number(
+                (
+                    pricePerPlayer *
+                    (
+                        1 +
+                        courseSettings.sales_tax_rate
+                    )
+                ).toFixed(2)
+            );
+
+        return {
+            pricePerPlayer,
+            subtotal,
+            taxAmount,
+            totalAfterTax,
+            perPlayerAfterTax
+        };
     }
 
 
     function formatCurrency(value) {
+        const configuredCurrency =
+            courseSettings?.currency || "usd";
+
         return new Intl.NumberFormat(
             "en-US",
             {
                 style: "currency",
-                currency: "USD",
-                maximumFractionDigits: 0
+                currency:
+                    configuredCurrency.toUpperCase(),
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
             }
         ).format(value);
+    }
+
+
+    function formatTaxRate() {
+        if (
+            !courseSettings ||
+            !Number.isFinite(
+                courseSettings.sales_tax_rate
+            )
+        ) {
+            return "";
+        }
+
+        return new Intl.NumberFormat(
+            "en-US",
+            {
+                style: "percent",
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            }
+        ).format(
+            courseSettings.sales_tax_rate
+        );
+    }
+
+
+    function updatePricingDisplay() {
+        const nineHolePricing =
+            getPricingBreakdown(1, 9);
+
+        const eighteenHolePricing =
+            getPricingBreakdown(1, 18);
+
+        if (
+            !nineHolePricing ||
+            !eighteenHolePricing
+        ) {
+            throw new Error(
+                "Course pricing settings are invalid."
+            );
+        }
+
+        price9Label.textContent =
+            formatCurrency(
+                nineHolePricing.pricePerPlayer
+            );
+
+        price9TaxLabel.textContent =
+            `${formatCurrency(
+                nineHolePricing.perPlayerAfterTax
+            )} after tax`;
+
+        price18Label.textContent =
+            formatCurrency(
+                eighteenHolePricing.pricePerPlayer
+            );
+
+        price18TaxLabel.textContent =
+            `${formatCurrency(
+                eighteenHolePricing.perPlayerAfterTax
+            )} after tax`;
+
+        pricingNote.textContent =
+            `Prices load from the course database. ` +
+            `Estimated tax: ${formatTaxRate()}.`;
     }
 
 
@@ -2099,13 +2271,31 @@
                 ? "Not selected"
                 : `${holes} holes`;
 
-        const estimatedPrice =
-            getEstimatedPrice(players, holes);
+        const pricing =
+            getPricingBreakdown(
+                players,
+                holes
+            );
 
         summaryPrice.textContent =
-            estimatedPrice === null
+            pricing === null
                 ? "—"
-                : formatCurrency(estimatedPrice);
+                : formatCurrency(
+                    pricing.totalAfterTax
+                );
+
+        summaryTaxNote.textContent =
+            pricing === null
+                ? "Select golfers and a round to calculate pricing."
+                : (
+                    `${formatCurrency(
+                        pricing.subtotal
+                    )} subtotal + ` +
+                    `${formatCurrency(
+                        pricing.taxAmount
+                    )} estimated tax ` +
+                    `(${formatTaxRate()}).`
+                );
     }
 
 
@@ -2188,7 +2378,7 @@
                 await supabase
                     .from("course_public_settings")
                     .select(
-                        "timezone, booking_start_time, booking_end_time, tee_interval_minutes, max_players"
+                        "timezone, booking_start_time, booking_end_time, tee_interval_minutes, max_players, price_9_holes, price_18_holes, sales_tax_rate, currency"
                     )
                     .eq("course_id", COURSE_ID)
                     .single();
@@ -2206,8 +2396,44 @@
                 tee_interval_minutes:
                     Number(data.tee_interval_minutes),
                 max_players:
-                    Number(data.max_players)
+                    Number(data.max_players),
+                price_9_holes:
+                    Number(data.price_9_holes),
+                price_18_holes:
+                    Number(data.price_18_holes),
+                sales_tax_rate:
+                    Number(data.sales_tax_rate),
+                currency:
+                    String(data.currency || "")
+                        .toLowerCase()
             };
+
+            if (
+                !Number.isFinite(
+                    courseSettings.price_9_holes
+                ) ||
+                courseSettings.price_9_holes <= 0 ||
+                !Number.isFinite(
+                    courseSettings.price_18_holes
+                ) ||
+                courseSettings.price_18_holes <= 0 ||
+                courseSettings.price_18_holes <
+                    courseSettings.price_9_holes ||
+                !Number.isFinite(
+                    courseSettings.sales_tax_rate
+                ) ||
+                courseSettings.sales_tax_rate < 0 ||
+                courseSettings.sales_tax_rate > 0.25 ||
+                !/^[a-z]{3}$/.test(
+                    courseSettings.currency
+                )
+            ) {
+                throw new Error(
+                    "Course pricing settings are invalid."
+                );
+            }
+
+            updatePricingDisplay();
 
             bookingDate.min =
                 getTodayInTimeZone(
@@ -2355,22 +2581,25 @@
             return;
         }
 
-        const pricePerPlayer =
-            MOCK_PRICE_PER_PLAYER[holes];
+        const pricing =
+            getPricingBreakdown(
+                players,
+                holes
+            );
 
-        const estimatedTotal =
-            getEstimatedPrice(players, holes);
-
-        if (
-            !Number.isFinite(pricePerPlayer) ||
-            !Number.isFinite(estimatedTotal)
-        ) {
+        if (!pricing) {
             showBookingMessage(
                 "The estimated price could not be calculated.",
                 "error"
             );
             return;
         }
+
+        const pricePerPlayer =
+            pricing.pricePerPlayer;
+
+        const estimatedTotal =
+            pricing.subtotal;
 
         submitButton.disabled = true;
 
@@ -2419,7 +2648,11 @@
             );
 
             showBookingMessage(
-                `${holes}-hole request submitted. Estimated total: ${formatCurrency(estimatedTotal)}.`,
+                `${holes}-hole request submitted. ` +
+                `Estimated total after tax: ` +
+                `${formatCurrency(
+                    pricing.totalAfterTax
+                )}.`,
                 "success"
             );
 
@@ -2487,8 +2720,27 @@
             message.includes("cost") ||
             message.includes("fee")
         ) {
-            assistantResponse.textContent =
-                "Demo pricing is $29 per golfer for 9 holes and $49 per golfer for 18 holes.";
+            const nineHolePricing =
+                getPricingBreakdown(1, 9);
+
+            const eighteenHolePricing =
+                getPricingBreakdown(1, 18);
+
+            if (
+                !nineHolePricing ||
+                !eighteenHolePricing
+            ) {
+                assistantResponse.textContent =
+                    "Course pricing is temporarily unavailable.";
+            } else {
+                assistantResponse.textContent =
+                    `Nine holes are ${formatCurrency(
+                        nineHolePricing.pricePerPlayer
+                    )} per golfer before tax, and ` +
+                    `18 holes are ${formatCurrency(
+                        eighteenHolePricing.pricePerPlayer
+                    )} per golfer before tax.`;
+            }
         } else if (
             message.includes("hole") ||
             message.includes("round")

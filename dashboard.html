@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>CoursePilot Dashboard</title>
+
+<style>
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    text-align: center;
+    padding-top: 60px;
+}
+
+
+.card {
+
+    background:white;
+    width:500px;
+    margin:auto;
+    padding:40px;
+    border-radius:15px;
+    box-shadow:0px 5px 20px rgba(0,0,0,0.1);
+
+}
+
+
+h1 {
+
+    color:#1b5e20;
+
+}
+
+
+.booking {
+
+    background:#f1f1f1;
+    padding:20px;
+    margin-top:20px;
+    border-radius:10px;
+
+}
+
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="card">
+
+
+<h1>
+CoursePilot Dashboard
+</h1>
+
+
+<h2>
+Booking Requests
+</h2>
+
+
+<div id="booking">
+
+Loading bookings...
+
+</div>
+
+
+</div>
+
+
+
+<script>
+
+
+let bookingArea = document.getElementById("booking");
+
+
+let booking = JSON.parse(
+    localStorage.getItem("booking")
+);
+
+
+
+if(booking){
+
+
+bookingArea.innerHTML = `
+
+<div class="booking">
+
+<p><strong>Name:</strong> ${booking.name}</p>
+
+<p><strong>Day:</strong> ${booking.day}</p>
+
+<p><strong>Time:</strong> ${booking.time}</p>
+
+<p><strong>Players:</strong> ${booking.players}</p>
+
+
+</div>
+
+`;
+
+
+}
+
+else {
+
+
+bookingArea.innerHTML =
+
+"No booking requests yet.";
+
+
+}
+
+
+</script>
+
+
+
+</body>
+
+</html>

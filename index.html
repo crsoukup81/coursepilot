@@ -174,31 +174,30 @@ function reply(){
     // Step 4: Getting name
     if(bookingStep === 4){
 
-        bookingInfo.name = input;
+    bookingInfo.name = input;
 
 
-        response.innerHTML =
-        "Perfect! I have your request for "
-        + bookingInfo.name
-        + " on "
-        + bookingInfo.day
-        + " at "
-        + bookingInfo.time
-        + " for "
-        + bookingInfo.players
-        + " golfers.";
+    response.innerHTML =
+    "Perfect! Your tee time request has been saved.";
 
 
-        console.log(bookingInfo);
+    // Save booking
+    localStorage.setItem(
+        "booking",
+        JSON.stringify(bookingInfo)
+    );
 
 
-        bookingStep = 0;
+    console.log(bookingInfo);
 
-        bookingInfo = {};
 
-        return;
+    bookingStep = 0;
 
-    }
+    bookingInfo = {};
+
+    return;
+
+}
 
 
 

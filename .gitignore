@@ -1,6 +1,9 @@
 # Downloaded Node.js packages
 node_modules/
 
+# Vite production build output
+dist/
+
 # Private environment variables and credentials
 .env
 .env.*

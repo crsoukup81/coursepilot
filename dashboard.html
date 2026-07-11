@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>CoursePilot Dashboard</title>
 
@@ -78,6 +81,10 @@
             color: #b00020;
         }
 
+        .success {
+            color: #1b5e20;
+        }
+
         .manager-bar {
             margin-bottom: 25px;
         }
@@ -92,8 +99,46 @@
             text-transform: capitalize;
         }
 
+        .status-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 16px;
+        }
+
+        .status-select {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #bbb;
+            border-radius: 6px;
+            font-size: 15px;
+            background: white;
+        }
+
+        .status-button {
+            margin-top: 0;
+            padding: 10px 16px;
+        }
+
+        .status-message {
+            min-height: 20px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
         #logoutButton {
             background: #555;
+        }
+
+        @media (max-width: 550px) {
+            .status-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .status-button {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -140,7 +185,10 @@
 
         <div class="manager-bar">
 
-            <p id="managerEmail" class="manager-email"></p>
+            <p
+                id="managerEmail"
+                class="manager-email"
+            ></p>
 
             <button id="logoutButton" type="button">
                 Log Out
@@ -161,6 +209,13 @@
 <script type="module">
 
     import { supabase } from "./supabase.js";
+
+    const VALID_STATUSES = [
+        "pending",
+        "confirmed",
+        "declined",
+        "cancelled"
+    ];
 
     const loginSection =
         document.getElementById("loginSection");
@@ -259,6 +314,166 @@
     }
 
 
+    function formatStatus(status) {
+        if (!status) {
+            return "Pending";
+        }
+
+        return (
+            status.charAt(0).toUpperCase() +
+            status.slice(1)
+        );
+    }
+
+
+    async function updateBookingStatus(
+        bookingId,
+        newStatus,
+        statusValue,
+        saveButton,
+        statusMessage
+    ) {
+        if (!VALID_STATUSES.includes(newStatus)) {
+            statusMessage.className =
+                "status-message error";
+
+            statusMessage.textContent =
+                "That status is not valid.";
+
+            return;
+        }
+
+        saveButton.disabled = true;
+
+        statusMessage.className =
+            "status-message";
+
+        statusMessage.textContent =
+            "Saving status...";
+
+        try {
+            const { error } =
+                await supabase
+                    .from("bookings")
+                    .update({
+                        status: newStatus
+                    })
+                    .eq("id", bookingId);
+
+            if (error) {
+                console.error(
+                    "Supabase status update error:",
+                    error
+                );
+
+                statusMessage.className =
+                    "status-message error";
+
+                statusMessage.textContent =
+                    "The status could not be updated.";
+
+                return;
+            }
+
+            statusValue.textContent =
+                formatStatus(newStatus);
+
+            statusMessage.className =
+                "status-message success";
+
+            statusMessage.textContent =
+                "Status updated.";
+        } catch (error) {
+            console.error(
+                "Unexpected status update error:",
+                error
+            );
+
+            statusMessage.className =
+                "status-message error";
+
+            statusMessage.textContent =
+                "An unexpected error occurred.";
+        } finally {
+            saveButton.disabled = false;
+        }
+    }
+
+
+    function createStatusControls(
+        booking,
+        statusValue
+    ) {
+        const controls =
+            document.createElement("div");
+
+        controls.className =
+            "status-controls";
+
+        const statusSelect =
+            document.createElement("select");
+
+        statusSelect.className =
+            "status-select";
+
+        statusSelect.setAttribute(
+            "aria-label",
+            `Change status for ${booking.name}`
+        );
+
+        for (const status of VALID_STATUSES) {
+            const option =
+                document.createElement("option");
+
+            option.value = status;
+            option.textContent =
+                formatStatus(status);
+
+            statusSelect.appendChild(option);
+        }
+
+        statusSelect.value =
+            booking.status || "pending";
+
+        const saveButton =
+            document.createElement("button");
+
+        saveButton.type = "button";
+        saveButton.className =
+            "status-button";
+
+        saveButton.textContent =
+            "Save Status";
+
+        const statusMessage =
+            document.createElement("p");
+
+        statusMessage.className =
+            "status-message";
+
+        saveButton.addEventListener(
+            "click",
+            async () => {
+                await updateBookingStatus(
+                    booking.id,
+                    statusSelect.value,
+                    statusValue,
+                    saveButton,
+                    statusMessage
+                );
+            }
+        );
+
+        controls.appendChild(statusSelect);
+        controls.appendChild(saveButton);
+
+        return {
+            controls,
+            statusMessage
+        };
+    }
+
+
     function renderBookings(bookings) {
         bookingArea.replaceChildren();
 
@@ -323,7 +538,9 @@
                 "booking-status";
 
             statusValue.textContent =
-                booking.status || "pending";
+                formatStatus(
+                    booking.status || "pending"
+                );
 
             statusParagraph.appendChild(
                 statusLabel
@@ -335,6 +552,19 @@
 
             bookingCard.appendChild(
                 statusParagraph
+            );
+
+            const {
+                controls,
+                statusMessage
+            } = createStatusControls(
+                booking,
+                statusValue
+            );
+
+            bookingCard.appendChild(controls);
+            bookingCard.appendChild(
+                statusMessage
             );
 
             bookingArea.appendChild(

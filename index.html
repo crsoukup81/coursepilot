@@ -2,220 +2,1153 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>CoursePilot AI</title>
+    <title>CoursePilot | Golf Course Assistant</title>
 
     <style>
+        :root {
+            --green-dark: #123d2b;
+            --green: #1b5e20;
+            --green-light: #e8f3ea;
+            --background: #f3f6f4;
+            --surface: #ffffff;
+            --text: #18211c;
+            --muted: #66736b;
+            --border: #d8e0da;
+            --error: #b42318;
+            --success: #16733a;
+            --shadow: 0 18px 50px rgba(18, 61, 43, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f8;
-            text-align: center;
-            padding-top: 80px;
+            margin: 0;
+            font-family:
+                Inter,
+                Arial,
+                sans-serif;
+            color: var(--text);
+            background: var(--background);
         }
 
-        .card {
-            background: white;
-            width: 500px;
-            max-width: 80%;
-            margin: auto;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        h1 {
-            color: #1b5e20;
+        button,
+        input,
+        select {
+            font: inherit;
         }
 
         button {
-            background: #1b5e20;
-            color: white;
-            border: none;
-            padding: 15px 25px;
-            border-radius: 8px;
-            font-size: 16px;
             cursor: pointer;
         }
 
-        button:hover {
-            opacity: 0.8;
+        .site-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
         }
 
-        input {
-            padding: 12px;
-            width: 70%;
-            margin-top: 15px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
+        .header-content {
+            width: min(1180px, 92%);
+            min-height: 72px;
+            margin: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 21px;
+            font-weight: 800;
+            color: var(--green-dark);
+        }
+
+        .brand-mark {
+            width: 40px;
+            height: 40px;
+            display: grid;
+            place-items: center;
+            border-radius: 12px;
+            color: white;
+            background: var(--green);
+            font-size: 18px;
+        }
+
+        .demo-label {
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--green);
+            background: var(--green-light);
+        }
+
+        .hero {
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(18, 61, 43, 0.98),
+                    rgba(27, 94, 32, 0.9)
+                );
+            color: white;
+        }
+
+        .hero-content {
+            width: min(1180px, 92%);
+            margin: auto;
+            padding: 72px 0 86px;
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .eyebrow {
+            margin: 0 0 12px;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #bce1c3;
+        }
+
+        .hero h1 {
+            max-width: 650px;
+            margin: 0;
+            font-size: clamp(40px, 6vw, 68px);
+            line-height: 1.02;
+        }
+
+        .hero-description {
+            max-width: 600px;
+            margin: 24px 0 0;
+            font-size: 19px;
+            line-height: 1.65;
+            color: #e2eee5;
+        }
+
+        .primary-button {
+            min-height: 50px;
+            margin-top: 28px;
+            padding: 0 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 800;
+            color: var(--green-dark);
+            background: white;
+        }
+
+        .primary-button:hover {
+            transform: translateY(-1px);
+        }
+
+        .hero-features {
+            display: grid;
+            gap: 14px;
+        }
+
+        .feature-item {
+            padding: 18px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.17);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(8px);
+        }
+
+        .feature-item strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .feature-item span {
+            color: #d8e8dc;
+        }
+
+        .main-content {
+            width: min(1180px, 92%);
+            margin: -38px auto 70px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .booking-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.75fr);
+            gap: 24px;
+            align-items: start;
+        }
+
+        .panel {
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: var(--surface);
+            box-shadow: var(--shadow);
+        }
+
+        .booking-panel {
+            padding: 34px;
+        }
+
+        .section-heading {
+            margin-bottom: 28px;
+        }
+
+        .section-heading h2 {
+            margin: 0 0 8px;
+            font-size: 28px;
+            color: var(--green-dark);
+        }
+
+        .section-heading p {
+            margin: 0;
+            line-height: 1.55;
+            color: var(--muted);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            min-width: 0;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label,
+        .field-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--green-dark);
+        }
+
+        input,
+        select {
+            width: 100%;
+            min-height: 48px;
+            padding: 11px 13px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            color: var(--text);
+            background: white;
+            outline: none;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--green);
+            box-shadow: 0 0 0 3px rgba(27, 94, 32, 0.12);
+        }
+
+        .player-options {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .player-option {
+            position: relative;
+        }
+
+        .player-option input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .player-option label {
+            min-height: 50px;
+            margin: 0;
+            display: grid;
+            place-items: center;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            background: white;
+            cursor: pointer;
+            transition: 0.15s ease;
+        }
+
+        .player-option input:checked + label {
+            color: white;
+            border-color: var(--green);
+            background: var(--green);
+        }
+
+        .field-note {
+            margin: 8px 0 0;
+            font-size: 13px;
+            line-height: 1.45;
+            color: var(--muted);
+        }
+
+        .submit-button {
+            width: 100%;
+            min-height: 52px;
+            margin-top: 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 800;
+            color: white;
+            background: var(--green);
+        }
+
+        .submit-button:hover {
+            background: var(--green-dark);
+        }
+
+        .submit-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .form-message {
+            min-height: 22px;
+            margin: 14px 0 0;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .form-message.error {
+            color: var(--error);
+        }
+
+        .form-message.success {
+            color: var(--success);
+        }
+
+        .sidebar {
+            display: grid;
+            gap: 24px;
+        }
+
+        .summary-panel,
+        .assistant-panel {
+            padding: 26px;
+        }
+
+        .summary-panel h3,
+        .assistant-panel h3 {
+            margin: 0 0 18px;
+            color: var(--green-dark);
+        }
+
+        .summary-list {
+            display: grid;
+            gap: 14px;
+        }
+
+        .summary-item {
+            padding-bottom: 13px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .summary-item:last-child {
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .summary-label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .summary-value {
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .request-warning {
+            margin: 20px 0 0;
+            padding: 13px;
+            border-radius: 9px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #5d5317;
+            background: #fff9d9;
+        }
+
+        .assistant-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--success);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        .assistant-response {
+            min-height: 62px;
+            margin: 0 0 15px;
+            padding: 14px;
+            border-radius: 10px;
+            line-height: 1.5;
+            color: var(--text);
+            background: var(--green-light);
+        }
+
+        .assistant-input-row {
+            display: flex;
+            gap: 9px;
+        }
+
+        .assistant-input-row input {
+            min-width: 0;
+        }
+
+        .assistant-button {
+            flex: 0 0 auto;
+            padding: 0 17px;
+            border: none;
+            border-radius: 9px;
+            font-weight: 800;
+            color: white;
+            background: var(--green);
+        }
+
+        @media (max-width: 900px) {
+            .hero-content,
+            .booking-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-content {
+                gap: 38px;
+            }
+
+            .main-content {
+                margin-top: -28px;
+            }
+        }
+
+        @media (max-width: 620px) {
+            .header-content {
+                min-height: 64px;
+            }
+
+            .hero-content {
+                padding: 54px 0 66px;
+            }
+
+            .booking-panel {
+                padding: 24px 20px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-group.full-width {
+                grid-column: auto;
+            }
+
+            .player-options {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .assistant-input-row {
+                flex-direction: column;
+            }
+
+            .assistant-button {
+                min-height: 46px;
+            }
         }
     </style>
 </head>
 
 <body>
 
-<div class="card">
+<header class="site-header">
+    <div class="header-content">
 
-    <h1>CoursePilot AI</h1>
+        <div class="brand">
+            <div class="brand-mark">CP</div>
+            <span>CoursePilot</span>
+        </div>
 
-    <p>Your 24/7 AI golf course assistant.</p>
+        <span class="demo-label">
+            Demo Course
+        </span>
 
-    <p>Never miss another booking call.</p>
+    </div>
+</header>
 
-    <button onclick="startDemo()">
-        Start Demo
-    </button>
+<section class="hero">
+    <div class="hero-content">
 
-    <div
-        id="demo"
-        style="display: none; margin-top: 30px;"
-    >
+        <div>
+            <p class="eyebrow">
+                Golf course booking assistant
+            </p>
 
-        <h2>AI Receptionist Demo</h2>
+            <h1>
+                Request your next tee time in minutes.
+            </h1>
 
-        <p id="message">
-            Hello! Thank you for calling CoursePilot AI.
-            How can I help you today?
-        </p>
+            <p class="hero-description">
+                Choose your preferred date, tee time, and group size.
+                The golf course will review the request and confirm
+                availability.
+            </p>
 
-        <input
-            id="userInput"
-            type="text"
-            placeholder="Type your response"
-        >
+            <button
+                id="heroBookingButton"
+                class="primary-button"
+                type="button"
+            >
+                Request a Tee Time
+            </button>
+        </div>
 
-        <br><br>
+        <div class="hero-features">
 
-        <button onclick="reply()">
-            Send
-        </button>
+            <div class="feature-item">
+                <strong>Structured tee-time requests</strong>
+                <span>
+                    No invalid dates, times, or oversized groups.
+                </span>
+            </div>
 
-        <p id="response"></p>
+            <div class="feature-item">
+                <strong>Course-approved time windows</strong>
+                <span>
+                    Request times from 8:04 AM through 6:20 PM.
+                </span>
+            </div>
+
+            <div class="feature-item">
+                <strong>Fast manager follow-up</strong>
+                <span>
+                    Requests are sent directly to the CoursePilot dashboard.
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+<main
+    id="bookingSection"
+    class="main-content"
+>
+
+    <div class="booking-layout">
+
+        <section class="panel booking-panel">
+
+            <div class="section-heading">
+                <h2>Request a tee time</h2>
+
+                <p>
+                    Complete the form below. This submits a request
+                    and does not guarantee that the selected time is available.
+                </p>
+            </div>
+
+            <form id="bookingForm">
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label for="bookingDate">
+                            Date
+                        </label>
+
+                        <input
+                            id="bookingDate"
+                            name="bookingDate"
+                            type="date"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bookingTime">
+                            Preferred tee time
+                        </label>
+
+                        <select
+                            id="bookingTime"
+                            name="bookingTime"
+                            required
+                        >
+                            <option value="">
+                                Select a time
+                            </option>
+                        </select>
+
+                        <p class="field-note">
+                            Times are available in 8-minute intervals.
+                        </p>
+                    </div>
+
+                    <div class="form-group full-width">
+
+                        <span class="field-label">
+                            Number of golfers
+                        </span>
+
+                        <div class="player-options">
+
+                            <div class="player-option">
+                                <input
+                                    id="players1"
+                                    name="players"
+                                    type="radio"
+                                    value="1"
+                                    required
+                                >
+
+                                <label for="players1">
+                                    1
+                                </label>
+                            </div>
+
+                            <div class="player-option">
+                                <input
+                                    id="players2"
+                                    name="players"
+                                    type="radio"
+                                    value="2"
+                                >
+
+                                <label for="players2">
+                                    2
+                                </label>
+                            </div>
+
+                            <div class="player-option">
+                                <input
+                                    id="players3"
+                                    name="players"
+                                    type="radio"
+                                    value="3"
+                                >
+
+                                <label for="players3">
+                                    3
+                                </label>
+                            </div>
+
+                            <div class="player-option">
+                                <input
+                                    id="players4"
+                                    name="players"
+                                    type="radio"
+                                    value="4"
+                                >
+
+                                <label for="players4">
+                                    4
+                                </label>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="customerName">
+                            Name
+                        </label>
+
+                        <input
+                            id="customerName"
+                            name="customerName"
+                            type="text"
+                            minlength="2"
+                            maxlength="100"
+                            placeholder="Your full name"
+                            autocomplete="name"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="customerPhone">
+                            Phone number
+                        </label>
+
+                        <input
+                            id="customerPhone"
+                            name="customerPhone"
+                            type="tel"
+                            maxlength="30"
+                            placeholder="616-555-1234"
+                            autocomplete="tel"
+                            required
+                        >
+                    </div>
+
+                </div>
+
+                <button
+                    id="submitButton"
+                    class="submit-button"
+                    type="submit"
+                >
+                    Submit Booking Request
+                </button>
+
+                <p
+                    id="bookingMessage"
+                    class="form-message"
+                    aria-live="polite"
+                ></p>
+
+            </form>
+
+        </section>
+
+        <aside class="sidebar">
+
+            <section class="panel summary-panel">
+
+                <h3>Your request</h3>
+
+                <div class="summary-list">
+
+                    <div class="summary-item">
+                        <span class="summary-label">
+                            Date
+                        </span>
+
+                        <span
+                            id="summaryDate"
+                            class="summary-value"
+                        >
+                            Not selected
+                        </span>
+                    </div>
+
+                    <div class="summary-item">
+                        <span class="summary-label">
+                            Tee time
+                        </span>
+
+                        <span
+                            id="summaryTime"
+                            class="summary-value"
+                        >
+                            Not selected
+                        </span>
+                    </div>
+
+                    <div class="summary-item">
+                        <span class="summary-label">
+                            Golfers
+                        </span>
+
+                        <span
+                            id="summaryPlayers"
+                            class="summary-value"
+                        >
+                            Not selected
+                        </span>
+                    </div>
+
+                </div>
+
+                <p class="request-warning">
+                    This is a tee-time request. The golf course must
+                    confirm availability before the reservation is final.
+                </p>
+
+            </section>
+
+            <section class="panel assistant-panel">
+
+                <div class="assistant-status">
+                    <span class="status-dot"></span>
+                    CoursePilot assistant online
+                </div>
+
+                <h3>Have a question?</h3>
+
+                <p
+                    id="assistantResponse"
+                    class="assistant-response"
+                >
+                    Ask about pricing, carts, rentals, or tee times.
+                </p>
+
+                <form id="assistantForm">
+
+                    <div class="assistant-input-row">
+
+                        <input
+                            id="assistantInput"
+                            type="text"
+                            placeholder="Type your question"
+                            autocomplete="off"
+                            required
+                        >
+
+                        <button
+                            class="assistant-button"
+                            type="submit"
+                        >
+                            Ask
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </section>
+
+        </aside>
 
     </div>
 
-</div>
+</main>
 
 <script type="module">
 
     import { supabase } from "./supabase.js";
 
-    // Public ID for the CoursePilot demo golf course.
+    // This is a public course identifier, not a secret credential.
     const COURSE_ID =
         "d82c7906-bf56-4103-b9af-a726f45ae36e";
 
-    // Tracks which question the receptionist is asking.
-    let bookingStep = 0;
+    const bookingForm =
+        document.getElementById("bookingForm");
 
-    // Temporarily stores answers during the conversation.
-    let bookingInfo = {};
+    const bookingDate =
+        document.getElementById("bookingDate");
+
+    const bookingTime =
+        document.getElementById("bookingTime");
+
+    const customerName =
+        document.getElementById("customerName");
+
+    const customerPhone =
+        document.getElementById("customerPhone");
+
+    const submitButton =
+        document.getElementById("submitButton");
+
+    const bookingMessage =
+        document.getElementById("bookingMessage");
+
+    const summaryDate =
+        document.getElementById("summaryDate");
+
+    const summaryTime =
+        document.getElementById("summaryTime");
+
+    const summaryPlayers =
+        document.getElementById("summaryPlayers");
+
+    const assistantForm =
+        document.getElementById("assistantForm");
+
+    const assistantInput =
+        document.getElementById("assistantInput");
+
+    const assistantResponse =
+        document.getElementById("assistantResponse");
+
+    const heroBookingButton =
+        document.getElementById("heroBookingButton");
+
+    const bookingSection =
+        document.getElementById("bookingSection");
 
 
-    function startDemo() {
-        document.getElementById("demo").style.display =
-            "block";
+    function getTodayLocalDate() {
+        const today = new Date();
+
+        const year =
+            today.getFullYear();
+
+        const month =
+            String(today.getMonth() + 1)
+                .padStart(2, "0");
+
+        const day =
+            String(today.getDate())
+                .padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
     }
 
 
-    async function reply() {
-        const inputElement =
-            document.getElementById("userInput");
+    function formatTimeForDisplay(totalMinutes) {
+        const hours24 =
+            Math.floor(totalMinutes / 60);
 
-        const response =
-            document.getElementById("response");
+        const minutes =
+            totalMinutes % 60;
 
-        const input =
-            inputElement.value.trim();
+        const period =
+            hours24 >= 12
+                ? "PM"
+                : "AM";
 
-        const message =
-            input.toLowerCase();
+        const hours12 =
+            hours24 % 12 || 12;
+
+        return (
+            `${hours12}:` +
+            `${String(minutes).padStart(2, "0")} ` +
+            period
+        );
+    }
 
 
-        // Step 1: Get the requested day.
-        if (bookingStep === 1) {
-            bookingInfo.day = input;
-            bookingStep = 2;
+    function formatTimeValue(totalMinutes) {
+        const hours =
+            Math.floor(totalMinutes / 60);
 
-            response.textContent =
-                "Great. What time would you like to play?";
+        const minutes =
+            totalMinutes % 60;
 
-            inputElement.value = "";
-            return;
+        return (
+            `${String(hours).padStart(2, "0")}:` +
+            `${String(minutes).padStart(2, "0")}`
+        );
+    }
+
+
+    function createTeeTimeOptions() {
+        const startMinutes =
+            (8 * 60) + 4;
+
+        const endMinutes =
+            (18 * 60) + 20;
+
+        for (
+            let minutes = startMinutes;
+            minutes <= endMinutes;
+            minutes += 8
+        ) {
+            const option =
+                document.createElement("option");
+
+            option.value =
+                formatTimeValue(minutes);
+
+            option.textContent =
+                formatTimeForDisplay(minutes);
+
+            bookingTime.appendChild(option);
+        }
+    }
+
+
+    function formatSelectedDate(dateValue) {
+        if (!dateValue) {
+            return "Not selected";
         }
 
+        const date =
+            new Date(`${dateValue}T12:00:00`);
 
-        // Step 2: Get the requested time.
-        if (bookingStep === 2) {
-            bookingInfo.time = input;
-            bookingStep = 3;
-
-            response.textContent =
-                "How many golfers will be playing?";
-
-            inputElement.value = "";
-            return;
+        if (Number.isNaN(date.getTime())) {
+            return "Not selected";
         }
 
-
-        // Step 3: Get the number of players.
-        if (bookingStep === 3) {
-            bookingInfo.players = input;
-            bookingStep = 4;
-
-            response.textContent =
-                "What is your name for the reservation?";
-
-            inputElement.value = "";
-            return;
-        }
-
-
-        // Step 4: Get the customer's name.
-        if (bookingStep === 4) {
-            bookingInfo.name = input;
-            bookingStep = 5;
-
-            response.textContent =
-                "What phone number should the golf course use to contact you?";
-
-            inputElement.value = "";
-            return;
-        }
-
-
-        // Step 5: Get the phone number and save the booking.
-        if (bookingStep === 5) {
-            if (
-                input.length < 7 ||
-                input.length > 30
-            ) {
-                response.textContent =
-                    "Please enter a valid phone number between 7 and 30 characters.";
-
-                return;
+        return date.toLocaleDateString(
+            undefined,
+            {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+                year: "numeric"
             }
+        );
+    }
 
-            bookingInfo.customer_phone = input;
 
-            response.textContent =
-                "Saving your tee time request...";
+    function getSelectedPlayerCount() {
+        const selectedPlayers =
+            document.querySelector(
+                'input[name="players"]:checked'
+            );
 
+        if (!selectedPlayers) {
+            return null;
+        }
+
+        return Number(selectedPlayers.value);
+    }
+
+
+    function updateBookingSummary() {
+        summaryDate.textContent =
+            formatSelectedDate(
+                bookingDate.value
+            );
+
+        const selectedTimeOption =
+            bookingTime.options[
+                bookingTime.selectedIndex
+            ];
+
+        summaryTime.textContent =
+            bookingTime.value &&
+            selectedTimeOption
+                ? selectedTimeOption.textContent
+                : "Not selected";
+
+        const players =
+            getSelectedPlayerCount();
+
+        summaryPlayers.textContent =
+            players === null
+                ? "Not selected"
+                : `${players} golfer${players === 1 ? "" : "s"}`;
+    }
+
+
+    function isValidPhoneNumber(phoneNumber) {
+        if (
+            phoneNumber.length < 7 ||
+            phoneNumber.length > 30
+        ) {
+            return false;
+        }
+
+        const digitsOnly =
+            phoneNumber.replace(/\D/g, "");
+
+        return (
+            digitsOnly.length >= 7 &&
+            digitsOnly.length <= 15
+        );
+    }
+
+
+    function showBookingMessage(
+        message,
+        type = ""
+    ) {
+        bookingMessage.textContent = message;
+
+        bookingMessage.className =
+            "form-message";
+
+        if (type) {
+            bookingMessage.classList.add(type);
+        }
+    }
+
+
+    async function submitBooking(event) {
+        event.preventDefault();
+
+        const players =
+            getSelectedPlayerCount();
+
+        const name =
+            customerName.value.trim();
+
+        const phone =
+            customerPhone.value.trim();
+
+        if (
+            !bookingDate.value ||
+            !bookingTime.value ||
+            players === null ||
+            !name ||
+            !phone
+        ) {
+            showBookingMessage(
+                "Complete every booking field.",
+                "error"
+            );
+
+            return;
+        }
+
+        if (
+            players < 1 ||
+            players > 4
+        ) {
+            showBookingMessage(
+                "Groups must contain 1 through 4 golfers.",
+                "error"
+            );
+
+            return;
+        }
+
+        if (
+            name.length < 2 ||
+            name.length > 100
+        ) {
+            showBookingMessage(
+                "Enter a name between 2 and 100 characters.",
+                "error"
+            );
+
+            return;
+        }
+
+        if (!isValidPhoneNumber(phone)) {
+            showBookingMessage(
+                "Enter a valid phone number.",
+                "error"
+            );
+
+            return;
+        }
+
+        submitButton.disabled = true;
+
+        showBookingMessage(
+            "Saving your booking request..."
+        );
+
+        const bookingRequest = {
+            course_id: COURSE_ID,
+            name,
+            day: bookingDate.value,
+            time: bookingTime.value,
+
+            // The current database column is still text.
+            players: String(players),
+
+            customer_phone: phone
+        };
+
+        try {
             const { error } =
                 await supabase
                     .from("bookings")
                     .insert([
-                        {
-                            course_id: COURSE_ID,
-                            name: bookingInfo.name,
-                            day: bookingInfo.day,
-                            time: bookingInfo.time,
-                            players: bookingInfo.players,
-                            customer_phone:
-                                bookingInfo.customer_phone
-                        }
+                        bookingRequest
                     ]);
 
             if (error) {
@@ -224,86 +1157,138 @@
                     error
                 );
 
-                response.textContent =
-                    "Sorry, your request could not be saved. Please try again.";
+                showBookingMessage(
+                    "Your booking request could not be saved. Please try again.",
+                    "error"
+                );
 
                 return;
             }
 
-            // Temporary browser copy retained for compatibility.
             localStorage.setItem(
                 "booking",
-                JSON.stringify(bookingInfo)
+                JSON.stringify(bookingRequest)
             );
 
-            console.log(
-                "Booking saved:",
-                bookingInfo
+            showBookingMessage(
+                "Your tee-time request was submitted successfully.",
+                "success"
             );
 
-            response.textContent =
-                "Perfect! Your tee time request has been saved.";
+            bookingForm.reset();
 
-            bookingStep = 0;
-            bookingInfo = {};
-            inputElement.value = "";
+            bookingDate.min =
+                getTodayLocalDate();
 
+            updateBookingSummary();
+        } catch (error) {
+            console.error(
+                "Unexpected booking error:",
+                error
+            );
+
+            showBookingMessage(
+                "An unexpected error occurred. Please try again.",
+                "error"
+            );
+        } finally {
+            submitButton.disabled = false;
+        }
+    }
+
+
+    function answerAssistantQuestion(event) {
+        event.preventDefault();
+
+        const message =
+            assistantInput.value
+                .trim()
+                .toLowerCase();
+
+        if (!message) {
             return;
         }
 
-
-        // Start a booking conversation.
         if (
             message.includes("book") ||
             message.includes("tee time")
         ) {
-            bookingStep = 1;
+            assistantResponse.textContent =
+                "Use the booking form to choose your preferred date, tee time, and group size.";
 
-            response.textContent =
-                "Great! I can help you book a tee time. What day would you like to play?";
+            bookingSection.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
 
-            inputElement.value = "";
-            return;
-        }
-
-
-        // Respond to pricing questions.
-        if (
+            bookingDate.focus();
+        } else if (
             message.includes("price") ||
             message.includes("cost") ||
             message.includes("fee")
         ) {
-            response.textContent =
-                "Our green fees vary depending on the day and time. Would you like me to check available options?";
-
-            inputElement.value = "";
-            return;
-        }
-
-
-        // Respond to rental questions.
-        if (
+            assistantResponse.textContent =
+                "Green fees vary by day and time. The golf course will provide final pricing when the request is confirmed.";
+        } else if (
             message.includes("cart") ||
             message.includes("rental")
         ) {
-            response.textContent =
-                "We offer golf cart rentals and club rentals. How many players will need equipment?";
-
-            inputElement.value = "";
-            return;
+            assistantResponse.textContent =
+                "Golf cart and club rental availability can be confirmed by the course when it reviews your request.";
+        } else if (
+            message.includes("hour") ||
+            message.includes("open") ||
+            message.includes("close")
+        ) {
+            assistantResponse.textContent =
+                "Course hours may vary by season and weather. Course-specific hours will be added to CoursePilot settings later.";
+        } else {
+            assistantResponse.textContent =
+                "I can help with tee times, pricing, hours, carts, rentals, and course information.";
         }
 
-
-        response.textContent =
-            "I can help with tee times, pricing, hours, rentals, and course information. What can I help you with?";
-
-        inputElement.value = "";
+        assistantInput.value = "";
     }
 
 
-    // Makes these functions available to the HTML buttons.
-    window.startDemo = startDemo;
-    window.reply = reply;
+    bookingDate.min =
+        getTodayLocalDate();
+
+    createTeeTimeOptions();
+    updateBookingSummary();
+
+
+    bookingForm.addEventListener(
+        "submit",
+        submitBooking
+    );
+
+    bookingForm.addEventListener(
+        "input",
+        updateBookingSummary
+    );
+
+    bookingForm.addEventListener(
+        "change",
+        updateBookingSummary
+    );
+
+    assistantForm.addEventListener(
+        "submit",
+        answerAssistantQuestion
+    );
+
+    heroBookingButton.addEventListener(
+        "click",
+        () => {
+            bookingSection.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+            bookingDate.focus();
+        }
+    );
 
 </script>
 

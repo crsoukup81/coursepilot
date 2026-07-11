@@ -2,58 +2,165 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>CoursePilot Dashboard</title>
+    <title>CoursePilot Manager Dashboard</title>
 
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f8;
-            text-align: center;
-            padding: 60px 20px;
+        :root {
+            --green-dark: #123d2b;
+            --green: #1b5e20;
+            --green-light: #e8f3ea;
+            --background: #f3f6f4;
+            --surface: #ffffff;
+            --surface-muted: #f8faf8;
+            --text: #17211b;
+            --muted: #69756d;
+            --border: #dce3de;
+            --blue: #2463eb;
+            --blue-light: #eaf0ff;
+            --yellow: #9a6700;
+            --yellow-light: #fff6d8;
+            --red: #b42318;
+            --red-light: #feecea;
+            --gray: #59636e;
+            --gray-light: #edf0f2;
+            --shadow: 0 14px 40px rgba(18, 61, 43, 0.1);
         }
 
-        .card {
-            background: white;
-            width: 700px;
-            max-width: 90%;
-            margin: auto;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        h1 {
-            color: #1b5e20;
-        }
-
-        input {
+        * {
             box-sizing: border-box;
-            width: 100%;
-            padding: 12px;
-            margin-top: 12px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 16px;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family:
+                Inter,
+                Arial,
+                sans-serif;
+            color: var(--text);
+            background: var(--background);
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
         }
 
         button {
-            background: #1b5e20;
-            color: white;
-            border: none;
-            padding: 12px 22px;
-            margin-top: 18px;
-            border-radius: 7px;
-            font-size: 16px;
             cursor: pointer;
         }
 
-        button:hover {
-            opacity: 0.85;
+        [hidden] {
+            display: none !important;
+        }
+
+        .login-page {
+            min-height: 100vh;
+            padding: 40px 20px;
+            display: grid;
+            place-items: center;
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(18, 61, 43, 0.98),
+                    rgba(27, 94, 32, 0.9)
+                );
+        }
+
+        .login-card {
+            width: min(440px, 100%);
+            padding: 36px;
+            border-radius: 20px;
+            background: var(--surface);
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.2);
+        }
+
+        .login-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .brand-mark {
+            width: 44px;
+            height: 44px;
+            display: grid;
+            place-items: center;
+            border-radius: 13px;
+            font-weight: 900;
+            color: white;
+            background: var(--green);
+        }
+
+        .brand-name {
+            font-size: 23px;
+            font-weight: 900;
+            color: var(--green-dark);
+        }
+
+        .login-card h1 {
+            margin: 0 0 8px;
+            font-size: 30px;
+            color: var(--green-dark);
+        }
+
+        .login-description {
+            margin: 0 0 24px;
+            line-height: 1.55;
+            color: var(--muted);
+        }
+
+        .form-group {
+            margin-top: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--green-dark);
+        }
+
+        input,
+        select {
+            width: 100%;
+            min-height: 46px;
+            padding: 11px 13px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            color: var(--text);
+            background: white;
+            outline: none;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--green);
+            box-shadow: 0 0 0 3px rgba(27, 94, 32, 0.12);
+        }
+
+        .primary-button {
+            width: 100%;
+            min-height: 48px;
+            margin-top: 22px;
+            border: none;
+            border-radius: 9px;
+            font-weight: 800;
+            color: white;
+            background: var(--green);
+        }
+
+        .primary-button:hover {
+            background: var(--green-dark);
         }
 
         button:disabled {
@@ -61,83 +168,466 @@
             cursor: not-allowed;
         }
 
-        .booking {
-            background: #f1f1f1;
-            padding: 20px;
-            margin-top: 20px;
-            border-radius: 10px;
-            text-align: left;
-        }
-
-        .booking p {
-            margin: 8px 0;
-        }
-
         .message {
-            margin-top: 15px;
+            min-height: 22px;
+            margin: 14px 0 0;
+            text-align: center;
+            font-weight: 700;
         }
 
         .error {
-            color: #b00020;
+            color: var(--red);
         }
 
         .success {
-            color: #1b5e20;
+            color: var(--green);
         }
 
-        .manager-bar {
-            margin-bottom: 25px;
+        .dashboard-shell {
+            min-height: 100vh;
+        }
+
+        .topbar {
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        .topbar-content {
+            width: min(1240px, 94%);
+            min-height: 72px;
+            margin: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .topbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .topbar-title {
+            display: block;
+            font-size: 20px;
+            font-weight: 900;
+            color: var(--green-dark);
+        }
+
+        .topbar-subtitle {
+            display: block;
+            margin-top: 2px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .manager-area {
+            display: flex;
+            align-items: center;
+            gap: 14px;
         }
 
         .manager-email {
-            margin-bottom: 0;
-            color: #555;
+            font-size: 14px;
+            color: var(--muted);
         }
 
-        .booking-status {
-            font-weight: bold;
-            text-transform: capitalize;
-        }
-
-        .status-controls {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-top: 16px;
-        }
-
-        .status-select {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #bbb;
-            border-radius: 6px;
-            font-size: 15px;
+        .logout-button {
+            min-height: 40px;
+            padding: 0 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-weight: 800;
+            color: var(--text);
             background: white;
         }
 
-        .status-button {
-            margin-top: 0;
-            padding: 10px 16px;
+        .logout-button:hover {
+            background: var(--surface-muted);
         }
 
-        .status-message {
-            min-height: 20px;
-            margin-top: 10px;
+        .dashboard-main {
+            width: min(1240px, 94%);
+            margin: auto;
+            padding: 38px 0 70px;
+        }
+
+        .page-heading {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 26px;
+        }
+
+        .page-heading h1 {
+            margin: 0;
+            font-size: clamp(30px, 4vw, 42px);
+            color: var(--green-dark);
+        }
+
+        .page-heading p {
+            margin: 8px 0 0;
+            color: var(--muted);
+        }
+
+        .refresh-button {
+            min-height: 42px;
+            padding: 0 18px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            font-weight: 800;
+            color: var(--green-dark);
+            background: white;
+        }
+
+        .refresh-button:hover {
+            background: var(--green-light);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 26px;
+        }
+
+        .stat-card {
+            padding: 22px;
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            background: var(--surface);
+            box-shadow: var(--shadow);
+        }
+
+        .stat-label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 13px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+        }
+
+        .stat-value {
+            font-size: 34px;
+            font-weight: 900;
+            color: var(--green-dark);
+        }
+
+        .manager-panel {
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            overflow: hidden;
+            background: var(--surface);
+            box-shadow: var(--shadow);
+        }
+
+        .toolbar {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .search-wrapper {
+            flex: 1;
+            max-width: 420px;
+        }
+
+        .search-wrapper input {
+            min-height: 44px;
+        }
+
+        .results-count {
             font-size: 14px;
+            font-weight: 700;
+            color: var(--muted);
         }
 
-        #logoutButton {
-            background: #555;
+        .tabs {
+            padding: 0 20px;
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            border-bottom: 1px solid var(--border);
         }
 
-        @media (max-width: 550px) {
-            .status-controls {
-                flex-direction: column;
-                align-items: stretch;
+        .tab-button {
+            flex: 0 0 auto;
+            padding: 16px 14px 13px;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-weight: 800;
+            color: var(--muted);
+            background: transparent;
+        }
+
+        .tab-button:hover {
+            color: var(--green);
+        }
+
+        .tab-button.active {
+            color: var(--green);
+            border-bottom-color: var(--green);
+        }
+
+        .tab-count {
+            display: inline-grid;
+            min-width: 23px;
+            height: 23px;
+            margin-left: 5px;
+            padding: 0 6px;
+            place-items: center;
+            border-radius: 999px;
+            font-size: 12px;
+            color: var(--muted);
+            background: var(--gray-light);
+        }
+
+        .tab-button.active .tab-count {
+            color: white;
+            background: var(--green);
+        }
+
+        .booking-list {
+            padding: 20px;
+            display: grid;
+            gap: 16px;
+        }
+
+        .booking-card {
+            padding: 22px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: var(--surface-muted);
+        }
+
+        .booking-card.is-new {
+            border-left: 5px solid var(--blue);
+            background: #fbfcff;
+        }
+
+        .booking-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .customer-name {
+            margin: 0;
+            font-size: 21px;
+            color: var(--green-dark);
+        }
+
+        .customer-phone {
+            display: inline-block;
+            margin-top: 5px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--blue);
+        }
+
+        .badge-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 7px;
+        }
+
+        .badge {
+            padding: 6px 9px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 900;
+            text-transform: capitalize;
+        }
+
+        .new-badge {
+            color: var(--blue);
+            background: var(--blue-light);
+        }
+
+        .seen-badge {
+            color: var(--gray);
+            background: var(--gray-light);
+        }
+
+        .status-pending {
+            color: var(--yellow);
+            background: var(--yellow-light);
+        }
+
+        .status-confirmed {
+            color: var(--green);
+            background: var(--green-light);
+        }
+
+        .status-declined,
+        .status-cancelled {
+            color: var(--red);
+            background: var(--red-light);
+        }
+
+        .booking-details {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .detail-item {
+            padding: 13px;
+            border-radius: 9px;
+            background: white;
+        }
+
+        .detail-label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--muted);
+        }
+
+        .detail-value {
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .booking-meta {
+            margin: 16px 0 0;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .booking-actions {
+            margin-top: 18px;
+            padding-top: 18px;
+            display: grid;
+            grid-template-columns: minmax(180px, 1fr) auto auto;
+            gap: 10px;
+            align-items: center;
+            border-top: 1px solid var(--border);
+        }
+
+        .status-select {
+            min-height: 42px;
+        }
+
+        .action-button {
+            min-height: 42px;
+            padding: 0 15px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 800;
+            color: white;
+            background: var(--green);
+        }
+
+        .secondary-button {
+            color: var(--green-dark);
+            border: 1px solid var(--border);
+            background: white;
+        }
+
+        .secondary-button:hover {
+            background: var(--green-light);
+        }
+
+        .action-message {
+            min-height: 20px;
+            margin: 10px 0 0;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .empty-state {
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .empty-state h3 {
+            margin: 0 0 8px;
+            color: var(--green-dark);
+        }
+
+        .empty-state p {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        @media (max-width: 900px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
 
-            .status-button {
+            .booking-details {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 680px) {
+            .topbar-content,
+            .page-heading,
+            .toolbar,
+            .booking-header {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .manager-area {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .refresh-button {
                 width: 100%;
+            }
+
+            .search-wrapper {
+                width: 100%;
+                max-width: none;
+            }
+
+            .booking-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .action-button {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid,
+            .booking-details {
+                grid-template-columns: 1fr;
+            }
+
+            .login-card {
+                padding: 28px 22px;
+            }
+
+            .dashboard-main {
+                width: min(94%, 1240px);
+            }
+
+            .booking-list,
+            .toolbar {
+                padding: 15px;
+            }
+
+            .booking-card {
+                padding: 18px;
             }
         }
     </style>
@@ -145,64 +635,332 @@
 
 <body>
 
-<div class="card">
+<section
+    id="loginSection"
+    class="login-page"
+>
 
-    <h1>CoursePilot Dashboard</h1>
+    <div class="login-card">
 
-    <section id="loginSection">
+        <div class="login-brand">
+            <div class="brand-mark">CP</div>
+            <span class="brand-name">CoursePilot</span>
+        </div>
 
-        <h2>Manager Login</h2>
+        <h1>Manager login</h1>
+
+        <p class="login-description">
+            Sign in to review booking requests and manage their status.
+        </p>
 
         <form id="loginForm">
 
-            <input
-                id="emailInput"
-                type="email"
-                placeholder="Manager email"
-                autocomplete="email"
-                required
-            >
+            <div class="form-group">
+                <label for="emailInput">
+                    Email
+                </label>
 
-            <input
-                id="passwordInput"
-                type="password"
-                placeholder="Password"
-                autocomplete="current-password"
-                required
-            >
+                <input
+                    id="emailInput"
+                    type="email"
+                    autocomplete="email"
+                    required
+                >
+            </div>
 
-            <button id="loginButton" type="submit">
+            <div class="form-group">
+                <label for="passwordInput">
+                    Password
+                </label>
+
+                <input
+                    id="passwordInput"
+                    type="password"
+                    autocomplete="current-password"
+                    required
+                >
+            </div>
+
+            <button
+                id="loginButton"
+                class="primary-button"
+                type="submit"
+            >
                 Log In
             </button>
 
         </form>
 
-        <p id="loginMessage" class="message"></p>
+        <p
+            id="loginMessage"
+            class="message"
+        ></p>
 
-    </section>
+    </div>
 
-    <section id="dashboardSection" hidden>
+</section>
 
-        <div class="manager-bar">
+<div
+    id="dashboardSection"
+    class="dashboard-shell"
+    hidden
+>
 
-            <p
-                id="managerEmail"
-                class="manager-email"
-            ></p>
+    <header class="topbar">
 
-            <button id="logoutButton" type="button">
-                Log Out
+        <div class="topbar-content">
+
+            <div class="topbar-brand">
+                <div class="brand-mark">CP</div>
+
+                <div>
+                    <span class="topbar-title">
+                        CoursePilot
+                    </span>
+
+                    <span class="topbar-subtitle">
+                        Manager Dashboard
+                    </span>
+                </div>
+            </div>
+
+            <div class="manager-area">
+
+                <span
+                    id="managerEmail"
+                    class="manager-email"
+                ></span>
+
+                <button
+                    id="logoutButton"
+                    class="logout-button"
+                    type="button"
+                >
+                    Log Out
+                </button>
+
+            </div>
+
+        </div>
+
+    </header>
+
+    <main class="dashboard-main">
+
+        <div class="page-heading">
+
+            <div>
+                <h1>Booking requests</h1>
+
+                <p>
+                    Review new requests and manage customer follow-up.
+                </p>
+            </div>
+
+            <button
+                id="refreshButton"
+                class="refresh-button"
+                type="button"
+            >
+                Refresh Bookings
             </button>
 
         </div>
 
-        <h2>Booking Requests</h2>
+        <section class="stats-grid">
 
-        <div id="bookingArea">
-            Loading bookings...
-        </div>
+            <article class="stat-card">
+                <span class="stat-label">
+                    New requests
+                </span>
 
-    </section>
+                <span
+                    id="newStat"
+                    class="stat-value"
+                >
+                    0
+                </span>
+            </article>
+
+            <article class="stat-card">
+                <span class="stat-label">
+                    Pending
+                </span>
+
+                <span
+                    id="pendingStat"
+                    class="stat-value"
+                >
+                    0
+                </span>
+            </article>
+
+            <article class="stat-card">
+                <span class="stat-label">
+                    Confirmed
+                </span>
+
+                <span
+                    id="confirmedStat"
+                    class="stat-value"
+                >
+                    0
+                </span>
+            </article>
+
+            <article class="stat-card">
+                <span class="stat-label">
+                    Total requests
+                </span>
+
+                <span
+                    id="totalStat"
+                    class="stat-value"
+                >
+                    0
+                </span>
+            </article>
+
+        </section>
+
+        <section class="manager-panel">
+
+            <div class="toolbar">
+
+                <div class="search-wrapper">
+                    <input
+                        id="searchInput"
+                        type="search"
+                        placeholder="Search by name or phone number"
+                        autocomplete="off"
+                    >
+                </div>
+
+                <span
+                    id="resultsCount"
+                    class="results-count"
+                >
+                    0 requests
+                </span>
+
+            </div>
+
+            <nav
+                id="tabs"
+                class="tabs"
+                aria-label="Booking filters"
+            >
+
+                <button
+                    class="tab-button active"
+                    type="button"
+                    data-filter="new"
+                >
+                    New
+                    <span
+                        id="newTabCount"
+                        class="tab-count"
+                    >
+                        0
+                    </span>
+                </button>
+
+                <button
+                    class="tab-button"
+                    type="button"
+                    data-filter="seen"
+                >
+                    Seen
+                    <span
+                        id="seenTabCount"
+                        class="tab-count"
+                    >
+                        0
+                    </span>
+                </button>
+
+                <button
+                    class="tab-button"
+                    type="button"
+                    data-filter="pending"
+                >
+                    Pending
+                    <span
+                        id="pendingTabCount"
+                        class="tab-count"
+                    >
+                        0
+                    </span>
+                </button>
+
+                <button
+                    class="tab-button"
+                    type="button"
+                    data-filter="confirmed"
+                >
+                    Confirmed
+                    <span
+                        id="confirmedTabCount"
+                        class="tab-count"
+                    >
+                        0
+                    </span>
+                </button>
+
+                <button
+                    class="tab-button"
+                    type="button"
+                    data-filter="declined"
+                >
+                    Declined
+                    <span
+                        id="declinedTabCount"
+                        class="tab-count"
+                    >
+                        0
+                    </span>
+                </button>
+
+                <button
+                    class="tab-button"
+                    type="button"
+                    data-filter="cancelled"
+                >
+                    Cancelled
+                    <span
+                        id="cancelledTabCount"
+                        class="tab-count"
+                    >
+                        0
+                    </span>
+                </button>
+
+                <button
+                    class="tab-button"
+                    type="button"
+                    data-filter="all"
+                >
+                    All
+                    <span
+                        id="allTabCount"
+                        class="tab-count"
+                    >
+                        0
+                    </span>
+                </button>
+
+            </nav>
+
+            <div
+                id="bookingArea"
+                class="booking-list"
+            >
+                Loading bookings...
+            </div>
+
+        </section>
+
+    </main>
 
 </div>
 
@@ -244,17 +1002,65 @@
     const logoutButton =
         document.getElementById("logoutButton");
 
+    const refreshButton =
+        document.getElementById("refreshButton");
+
+    const searchInput =
+        document.getElementById("searchInput");
+
+    const tabs =
+        document.getElementById("tabs");
+
     const bookingArea =
         document.getElementById("bookingArea");
+
+    const resultsCount =
+        document.getElementById("resultsCount");
+
+    const newStat =
+        document.getElementById("newStat");
+
+    const pendingStat =
+        document.getElementById("pendingStat");
+
+    const confirmedStat =
+        document.getElementById("confirmedStat");
+
+    const totalStat =
+        document.getElementById("totalStat");
+
+    const newTabCount =
+        document.getElementById("newTabCount");
+
+    const seenTabCount =
+        document.getElementById("seenTabCount");
+
+    const pendingTabCount =
+        document.getElementById("pendingTabCount");
+
+    const confirmedTabCount =
+        document.getElementById("confirmedTabCount");
+
+    const declinedTabCount =
+        document.getElementById("declinedTabCount");
+
+    const cancelledTabCount =
+        document.getElementById("cancelledTabCount");
+
+    const allTabCount =
+        document.getElementById("allTabCount");
+
+    let bookings = [];
+    let activeFilter = "new";
 
 
     function showLogin() {
         loginSection.hidden = false;
         dashboardSection.hidden = true;
 
-        managerEmail.textContent = "";
-        bookingArea.textContent = "";
         loginForm.reset();
+        managerEmail.textContent = "";
+        bookings = [];
     }
 
 
@@ -266,51 +1072,6 @@
             `Signed in as ${email}`;
 
         await loadBookings();
-    }
-
-
-    function addBookingField(
-        container,
-        label,
-        value
-    ) {
-        const paragraph =
-            document.createElement("p");
-
-        const strong =
-            document.createElement("strong");
-
-        strong.textContent = `${label}: `;
-
-        paragraph.appendChild(strong);
-
-        paragraph.appendChild(
-            document.createTextNode(
-                value || "Not provided"
-            )
-        );
-
-        container.appendChild(paragraph);
-    }
-
-
-    function formatSubmittedAt(createdAt) {
-        if (!createdAt) {
-            return "Unknown";
-        }
-
-        const submittedDate =
-            new Date(createdAt);
-
-        if (
-            Number.isNaN(
-                submittedDate.getTime()
-            )
-        ) {
-            return "Unknown";
-        }
-
-        return submittedDate.toLocaleString();
     }
 
 
@@ -326,73 +1087,316 @@
     }
 
 
+    function formatRequestedDate(dateValue) {
+        if (!dateValue) {
+            return "Not provided";
+        }
+
+        const date =
+            new Date(`${dateValue}T12:00:00`);
+
+        if (Number.isNaN(date.getTime())) {
+            return dateValue;
+        }
+
+        return date.toLocaleDateString(
+            undefined,
+            {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+                year: "numeric"
+            }
+        );
+    }
+
+
+    function formatRequestedTime(timeValue) {
+        if (!timeValue) {
+            return "Not provided";
+        }
+
+        const match =
+            /^(\d{2}):(\d{2})/.exec(timeValue);
+
+        if (!match) {
+            return timeValue;
+        }
+
+        const hours24 =
+            Number(match[1]);
+
+        const minutes =
+            match[2];
+
+        const period =
+            hours24 >= 12
+                ? "PM"
+                : "AM";
+
+        const hours12 =
+            hours24 % 12 || 12;
+
+        return `${hours12}:${minutes} ${period}`;
+    }
+
+
+    function formatTimestamp(timestamp) {
+        if (!timestamp) {
+            return "Not yet";
+        }
+
+        const date =
+            new Date(timestamp);
+
+        if (Number.isNaN(date.getTime())) {
+            return "Unknown";
+        }
+
+        return date.toLocaleString();
+    }
+
+
+    function createBadge(text, className) {
+        const badge =
+            document.createElement("span");
+
+        badge.className =
+            `badge ${className}`;
+
+        badge.textContent = text;
+
+        return badge;
+    }
+
+
+    function createDetailItem(label, value) {
+        const item =
+            document.createElement("div");
+
+        item.className = "detail-item";
+
+        const labelElement =
+            document.createElement("span");
+
+        labelElement.className =
+            "detail-label";
+
+        labelElement.textContent = label;
+
+        const valueElement =
+            document.createElement("span");
+
+        valueElement.className =
+            "detail-value";
+
+        valueElement.textContent =
+            value || "Not provided";
+
+        item.appendChild(labelElement);
+        item.appendChild(valueElement);
+
+        return item;
+    }
+
+
+    function getFilteredBookings() {
+    const searchTerm =
+        searchInput.value
+            .trim()
+            .toLowerCase();
+
+    const searchDigits =
+        searchTerm.replace(/\D/g, "");
+
+    return bookings.filter((booking) => {
+
+        // When the manager searches, search every booking
+        // regardless of the currently selected tab.
+        if (searchTerm) {
+            const customerName =
+                String(booking.name || "")
+                    .toLowerCase();
+
+            const customerPhone =
+                String(
+                    booking.customer_phone || ""
+                );
+
+            const customerPhoneDigits =
+                customerPhone.replace(/\D/g, "");
+
+            const nameMatches =
+                customerName.includes(searchTerm);
+
+            const phoneTextMatches =
+                customerPhone
+                    .toLowerCase()
+                    .includes(searchTerm);
+
+            const phoneDigitsMatch =
+                searchDigits.length > 0 &&
+                customerPhoneDigits.includes(
+                    searchDigits
+                );
+
+            return (
+                nameMatches ||
+                phoneTextMatches ||
+                phoneDigitsMatch
+            );
+        }
+
+        // When there is no search, use the selected tab.
+        return (
+            activeFilter === "all" ||
+            (
+                activeFilter === "new" &&
+                !booking.viewed_at
+            ) ||
+            (
+                activeFilter === "seen" &&
+                Boolean(booking.viewed_at)
+            ) ||
+            booking.status === activeFilter
+        );
+    });
+}
+
+
+    function updateCounts() {
+        const newCount =
+            bookings.filter(
+                (booking) => !booking.viewed_at
+            ).length;
+
+        const seenCount =
+            bookings.filter(
+                (booking) =>
+                    Boolean(booking.viewed_at)
+            ).length;
+
+        const pendingCount =
+            bookings.filter(
+                (booking) =>
+                    booking.status === "pending"
+            ).length;
+
+        const confirmedCount =
+            bookings.filter(
+                (booking) =>
+                    booking.status === "confirmed"
+            ).length;
+
+        const declinedCount =
+            bookings.filter(
+                (booking) =>
+                    booking.status === "declined"
+            ).length;
+
+        const cancelledCount =
+            bookings.filter(
+                (booking) =>
+                    booking.status === "cancelled"
+            ).length;
+
+        newStat.textContent = String(newCount);
+        pendingStat.textContent =
+            String(pendingCount);
+        confirmedStat.textContent =
+            String(confirmedCount);
+        totalStat.textContent =
+            String(bookings.length);
+
+        newTabCount.textContent =
+            String(newCount);
+        seenTabCount.textContent =
+            String(seenCount);
+        pendingTabCount.textContent =
+            String(pendingCount);
+        confirmedTabCount.textContent =
+            String(confirmedCount);
+        declinedTabCount.textContent =
+            String(declinedCount);
+        cancelledTabCount.textContent =
+            String(cancelledCount);
+        allTabCount.textContent =
+            String(bookings.length);
+    }
+
+
     async function updateBookingStatus(
-        bookingId,
+        booking,
         newStatus,
-        statusValue,
         saveButton,
-        statusMessage
+        actionMessage
     ) {
         if (!VALID_STATUSES.includes(newStatus)) {
-            statusMessage.className =
-                "status-message error";
+            actionMessage.className =
+                "action-message error";
 
-            statusMessage.textContent =
-                "That status is not valid.";
+            actionMessage.textContent =
+                "Invalid booking status.";
 
             return;
         }
 
         saveButton.disabled = true;
 
-        statusMessage.className =
-            "status-message";
+        actionMessage.className =
+            "action-message";
 
-        statusMessage.textContent =
+        actionMessage.textContent =
             "Saving status...";
 
         try {
-            const { error } =
+            const { data, error } =
                 await supabase
                     .from("bookings")
                     .update({
                         status: newStatus
                     })
-                    .eq("id", bookingId);
+                    .eq("id", booking.id)
+                    .select(
+                        "id, status"
+                    )
+                    .maybeSingle();
 
-            if (error) {
+            if (error || !data) {
                 console.error(
-                    "Supabase status update error:",
+                    "Booking status update failed:",
                     error
                 );
 
-                statusMessage.className =
-                    "status-message error";
+                actionMessage.className =
+                    "action-message error";
 
-                statusMessage.textContent =
+                actionMessage.textContent =
                     "The status could not be updated.";
 
                 return;
             }
 
-            statusValue.textContent =
-                formatStatus(newStatus);
+            booking.status = data.status;
 
-            statusMessage.className =
-                "status-message success";
+            actionMessage.className =
+                "action-message success";
 
-            statusMessage.textContent =
+            actionMessage.textContent =
                 "Status updated.";
+
+            updateCounts();
+            renderBookings();
         } catch (error) {
             console.error(
                 "Unexpected status update error:",
                 error
             );
 
-            statusMessage.className =
-                "status-message error";
+            actionMessage.className =
+                "action-message error";
 
-            statusMessage.textContent =
+            actionMessage.textContent =
                 "An unexpected error occurred.";
         } finally {
             saveButton.disabled = false;
@@ -400,15 +1404,220 @@
     }
 
 
-    function createStatusControls(
+    async function updateViewedState(
         booking,
-        statusValue
+        viewed,
+        viewButton,
+        actionMessage
     ) {
-        const controls =
+        viewButton.disabled = true;
+
+        actionMessage.className =
+            "action-message";
+
+        actionMessage.textContent =
+            viewed
+                ? "Marking as seen..."
+                : "Marking as new...";
+
+        const viewedAt =
+            viewed
+                ? new Date().toISOString()
+                : null;
+
+        try {
+            const { data, error } =
+                await supabase
+                    .from("bookings")
+                    .update({
+                        viewed_at: viewedAt
+                    })
+                    .eq("id", booking.id)
+                    .select(
+                        "id, viewed_at"
+                    )
+                    .maybeSingle();
+
+            if (error || !data) {
+                console.error(
+                    "Booking view update failed:",
+                    error
+                );
+
+                actionMessage.className =
+                    "action-message error";
+
+                actionMessage.textContent =
+                    "The viewed state could not be updated.";
+
+                return;
+            }
+
+            booking.viewed_at =
+                data.viewed_at;
+
+            updateCounts();
+            renderBookings();
+        } catch (error) {
+            console.error(
+                "Unexpected viewed-state error:",
+                error
+            );
+
+            actionMessage.className =
+                "action-message error";
+
+            actionMessage.textContent =
+                "An unexpected error occurred.";
+        } finally {
+            viewButton.disabled = false;
+        }
+    }
+
+
+    function createBookingCard(booking) {
+        const card =
+            document.createElement("article");
+
+        card.className =
+            booking.viewed_at
+                ? "booking-card"
+                : "booking-card is-new";
+
+        const header =
             document.createElement("div");
 
-        controls.className =
-            "status-controls";
+        header.className =
+            "booking-header";
+
+        const customerBlock =
+            document.createElement("div");
+
+        const customerName =
+            document.createElement("h3");
+
+        customerName.className =
+            "customer-name";
+
+        customerName.textContent =
+            booking.name || "Unnamed customer";
+
+        const phoneLink =
+            document.createElement("a");
+
+        phoneLink.className =
+            "customer-phone";
+
+        const phone =
+            booking.customer_phone ||
+            "No phone number";
+
+        phoneLink.textContent = phone;
+
+        phoneLink.href =
+            booking.customer_phone
+                ? `tel:${booking.customer_phone.replace(
+                    /[^\d+]/g,
+                    ""
+                )}`
+                : "#";
+
+        customerBlock.appendChild(
+            customerName
+        );
+
+        customerBlock.appendChild(
+            phoneLink
+        );
+
+        const badges =
+            document.createElement("div");
+
+        badges.className = "badge-group";
+
+        badges.appendChild(
+            createBadge(
+                booking.viewed_at
+                    ? "Seen"
+                    : "New",
+                booking.viewed_at
+                    ? "seen-badge"
+                    : "new-badge"
+            )
+        );
+
+        badges.appendChild(
+            createBadge(
+                formatStatus(
+                    booking.status
+                ),
+                `status-${booking.status}`
+            )
+        );
+
+        header.appendChild(customerBlock);
+        header.appendChild(badges);
+
+        const details =
+            document.createElement("div");
+
+        details.className =
+            "booking-details";
+
+        details.appendChild(
+            createDetailItem(
+                "Requested date",
+                formatRequestedDate(
+                    booking.day
+                )
+            )
+        );
+
+        details.appendChild(
+            createDetailItem(
+                "Tee time",
+                formatRequestedTime(
+                    booking.time
+                )
+            )
+        );
+
+        details.appendChild(
+            createDetailItem(
+                "Golfers",
+                String(
+                    booking.players ||
+                    "Not provided"
+                )
+            )
+        );
+
+        details.appendChild(
+            createDetailItem(
+                "Submitted",
+                formatTimestamp(
+                    booking.created_at
+                )
+            )
+        );
+
+        const meta =
+            document.createElement("p");
+
+        meta.className = "booking-meta";
+
+        meta.textContent =
+            booking.viewed_at
+                ? `First reviewed: ${formatTimestamp(
+                    booking.viewed_at
+                )}`
+                : "This request has not been reviewed.";
+
+        const actions =
+            document.createElement("div");
+
+        actions.className =
+            "booking-actions";
 
         const statusSelect =
             document.createElement("select");
@@ -418,10 +1627,12 @@
 
         statusSelect.setAttribute(
             "aria-label",
-            `Change status for ${booking.name}`
+            `Booking status for ${booking.name}`
         );
 
-        for (const status of VALID_STATUSES) {
+        for (
+            const status of VALID_STATUSES
+        ) {
             const option =
                 document.createElement("option");
 
@@ -439,136 +1650,118 @@
             document.createElement("button");
 
         saveButton.type = "button";
+
         saveButton.className =
-            "status-button";
+            "action-button";
 
         saveButton.textContent =
             "Save Status";
 
-        const statusMessage =
+        const viewButton =
+            document.createElement("button");
+
+        viewButton.type = "button";
+
+        viewButton.className =
+            "action-button secondary-button";
+
+        viewButton.textContent =
+            booking.viewed_at
+                ? "Mark as New"
+                : "Mark as Seen";
+
+        const actionMessage =
             document.createElement("p");
 
-        statusMessage.className =
-            "status-message";
+        actionMessage.className =
+            "action-message";
 
         saveButton.addEventListener(
             "click",
             async () => {
                 await updateBookingStatus(
-                    booking.id,
+                    booking,
                     statusSelect.value,
-                    statusValue,
                     saveButton,
-                    statusMessage
+                    actionMessage
                 );
             }
         );
 
-        controls.appendChild(statusSelect);
-        controls.appendChild(saveButton);
+        viewButton.addEventListener(
+            "click",
+            async () => {
+                await updateViewedState(
+                    booking,
+                    !booking.viewed_at,
+                    viewButton,
+                    actionMessage
+                );
+            }
+        );
 
-        return {
-            controls,
-            statusMessage
-        };
+        actions.appendChild(statusSelect);
+        actions.appendChild(saveButton);
+        actions.appendChild(viewButton);
+
+        card.appendChild(header);
+        card.appendChild(details);
+        card.appendChild(meta);
+        card.appendChild(actions);
+        card.appendChild(actionMessage);
+
+        return card;
     }
 
 
-    function renderBookings(bookings) {
+    function renderBookings() {
+        const filteredBookings =
+            getFilteredBookings();
+
         bookingArea.replaceChildren();
 
-        if (bookings.length === 0) {
-            bookingArea.textContent =
-                "No booking requests yet.";
+        resultsCount.textContent =
+            `${filteredBookings.length} ` +
+            (
+                filteredBookings.length === 1
+                    ? "request"
+                    : "requests"
+            );
+
+        if (filteredBookings.length === 0) {
+            const emptyState =
+                document.createElement("div");
+
+            emptyState.className =
+                "empty-state";
+
+            const heading =
+                document.createElement("h3");
+
+            heading.textContent =
+                "No matching booking requests";
+
+            const description =
+                document.createElement("p");
+
+            description.textContent =
+                "Try another tab or clear the search.";
+
+            emptyState.appendChild(heading);
+            emptyState.appendChild(description);
+
+            bookingArea.appendChild(
+                emptyState
+            );
 
             return;
         }
 
-        for (const booking of bookings) {
-            const bookingCard =
-                document.createElement("div");
-
-            bookingCard.className = "booking";
-
-            addBookingField(
-                bookingCard,
-                "Name",
-                booking.name
-            );
-
-            addBookingField(
-                bookingCard,
-                "Day",
-                booking.day
-            );
-
-            addBookingField(
-                bookingCard,
-                "Time",
-                booking.time
-            );
-
-            addBookingField(
-                bookingCard,
-                "Players",
-                booking.players
-            );
-
-            addBookingField(
-                bookingCard,
-                "Submitted",
-                formatSubmittedAt(
-                    booking.created_at
-                )
-            );
-
-            const statusParagraph =
-                document.createElement("p");
-
-            const statusLabel =
-                document.createElement("strong");
-
-            const statusValue =
-                document.createElement("span");
-
-            statusLabel.textContent =
-                "Status: ";
-
-            statusValue.className =
-                "booking-status";
-
-            statusValue.textContent =
-                formatStatus(
-                    booking.status || "pending"
-                );
-
-            statusParagraph.appendChild(
-                statusLabel
-            );
-
-            statusParagraph.appendChild(
-                statusValue
-            );
-
-            bookingCard.appendChild(
-                statusParagraph
-            );
-
-            const {
-                controls,
-                statusMessage
-            } = createStatusControls(
-                booking,
-                statusValue
-            );
-
-            bookingCard.appendChild(controls);
-            bookingCard.appendChild(
-                statusMessage
-            );
-
+        for (
+            const booking of filteredBookings
+        ) {
             bookingArea.appendChild(
-                bookingCard
+                createBookingCard(booking)
             );
         }
     }
@@ -578,12 +1771,14 @@
         bookingArea.textContent =
             "Loading bookings...";
 
+        refreshButton.disabled = true;
+
         try {
             const { data, error } =
                 await supabase
                     .from("bookings")
                     .select(
-                        "id, name, day, time, players, status, created_at, course_id"
+                        "id, name, day, time, players, customer_phone, status, created_at, viewed_at, course_id"
                     )
                     .order(
                         "created_at",
@@ -594,7 +1789,7 @@
 
             if (error) {
                 console.error(
-                    "Supabase booking load error:",
+                    "Booking load failed:",
                     error
                 );
 
@@ -604,7 +1799,10 @@
                 return;
             }
 
-            renderBookings(data || []);
+            bookings = data || [];
+
+            updateCounts();
+            renderBookings();
         } catch (error) {
             console.error(
                 "Unexpected booking load error:",
@@ -613,6 +1811,8 @@
 
             bookingArea.textContent =
                 "An unexpected error occurred while loading bookings.";
+        } finally {
+            refreshButton.disabled = false;
         }
     }
 
@@ -643,16 +1843,16 @@
                     });
 
             if (error) {
+                console.error(
+                    "Login failed:",
+                    error
+                );
+
                 loginMessage.className =
                     "message error";
 
                 loginMessage.textContent =
                     "Login failed. Check your email and password.";
-
-                console.error(
-                    "Supabase login error:",
-                    error
-                );
 
                 return;
             }
@@ -688,7 +1888,7 @@
 
             if (error) {
                 console.error(
-                    "Supabase logout error:",
+                    "Logout failed:",
                     error
                 );
 
@@ -704,11 +1904,12 @@
 
     async function initializeDashboard() {
         const { data, error } =
-            await supabase.auth.getSession();
+            await supabase.auth
+                .getSession();
 
         if (error) {
             console.error(
-                "Could not check login session:",
+                "Session check failed:",
                 error
             );
 
@@ -729,15 +1930,62 @@
     }
 
 
+    tabs.addEventListener(
+        "click",
+        (event) => {
+            const button =
+                event.target.closest(
+                    ".tab-button"
+                );
+
+            if (!button) {
+                return;
+            }
+
+            activeFilter =
+                button.dataset.filter;
+
+            document
+                .querySelectorAll(
+                    ".tab-button"
+                )
+                .forEach(
+                    (tab) =>
+                        tab.classList.remove(
+                            "active"
+                        )
+                );
+
+            button.classList.add("active");
+
+            renderBookings();
+        }
+    );
+
+
+    searchInput.addEventListener(
+        "input",
+        renderBookings
+    );
+
+
+    refreshButton.addEventListener(
+        "click",
+        loadBookings
+    );
+
+
     loginForm.addEventListener(
         "submit",
         handleLogin
     );
 
+
     logoutButton.addEventListener(
         "click",
         handleLogout
     );
+
 
     initializeDashboard();
 

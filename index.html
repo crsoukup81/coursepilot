@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>CoursePilot AI</title>
 
@@ -66,12 +69,16 @@
         Start Demo
     </button>
 
-    <div id="demo" style="display: none; margin-top: 30px;">
+    <div
+        id="demo"
+        style="display: none; margin-top: 30px;"
+    >
 
         <h2>AI Receptionist Demo</h2>
 
         <p id="message">
-            Hello! Thank you for calling CoursePilot AI. How can I help you today?
+            Hello! Thank you for calling CoursePilot AI.
+            How can I help you today?
         </p>
 
         <input
@@ -97,24 +104,35 @@
     import { supabase } from "./supabase.js";
 
     // Public ID for the CoursePilot demo golf course.
-    const COURSE_ID = "d82c7906-bf56-4103-b9af-a726f45ae36e";
+    const COURSE_ID =
+        "d82c7906-bf56-4103-b9af-a726f45ae36e";
 
-    // Tracks which question the receptionist is currently asking.
+    // Tracks which question the receptionist is asking.
     let bookingStep = 0;
 
-    // Temporarily stores the answers during the conversation.
+    // Temporarily stores answers during the conversation.
     let bookingInfo = {};
 
+
     function startDemo() {
-        document.getElementById("demo").style.display = "block";
+        document.getElementById("demo").style.display =
+            "block";
     }
 
-    async function reply() {
-        const inputElement = document.getElementById("userInput");
-        const response = document.getElementById("response");
 
-        const input = inputElement.value.trim();
-        const message = input.toLowerCase();
+    async function reply() {
+        const inputElement =
+            document.getElementById("userInput");
+
+        const response =
+            document.getElementById("response");
+
+        const input =
+            inputElement.value.trim();
+
+        const message =
+            input.toLowerCase();
+
 
         // Step 1: Get the requested day.
         if (bookingStep === 1) {
@@ -128,6 +146,7 @@
             return;
         }
 
+
         // Step 2: Get the requested time.
         if (bookingStep === 2) {
             bookingInfo.time = input;
@@ -139,6 +158,7 @@
             inputElement.value = "";
             return;
         }
+
 
         // Step 3: Get the number of players.
         if (bookingStep === 3) {
@@ -152,27 +172,57 @@
             return;
         }
 
-        // Step 4: Get the name and save the booking.
+
+        // Step 4: Get the customer's name.
         if (bookingStep === 4) {
             bookingInfo.name = input;
+            bookingStep = 5;
+
+            response.textContent =
+                "What phone number should the golf course use to contact you?";
+
+            inputElement.value = "";
+            return;
+        }
+
+
+        // Step 5: Get the phone number and save the booking.
+        if (bookingStep === 5) {
+            if (
+                input.length < 7 ||
+                input.length > 30
+            ) {
+                response.textContent =
+                    "Please enter a valid phone number between 7 and 30 characters.";
+
+                return;
+            }
+
+            bookingInfo.customer_phone = input;
 
             response.textContent =
                 "Saving your tee time request...";
 
-            const { error } = await supabase
-                .from("bookings")
-                .insert([
-                    {
-                        course_id: COURSE_ID,
-                        name: bookingInfo.name,
-                        day: bookingInfo.day,
-                        time: bookingInfo.time,
-                        players: bookingInfo.players
-                    }
-                ]);
+            const { error } =
+                await supabase
+                    .from("bookings")
+                    .insert([
+                        {
+                            course_id: COURSE_ID,
+                            name: bookingInfo.name,
+                            day: bookingInfo.day,
+                            time: bookingInfo.time,
+                            players: bookingInfo.players,
+                            customer_phone:
+                                bookingInfo.customer_phone
+                        }
+                    ]);
 
             if (error) {
-                console.error("Supabase booking error:", error);
+                console.error(
+                    "Supabase booking error:",
+                    error
+                );
 
                 response.textContent =
                     "Sorry, your request could not be saved. Please try again.";
@@ -180,13 +230,16 @@
                 return;
             }
 
-            // Temporary browser copy for the current dashboard.
+            // Temporary browser copy retained for compatibility.
             localStorage.setItem(
                 "booking",
                 JSON.stringify(bookingInfo)
             );
 
-            console.log("Booking saved:", bookingInfo);
+            console.log(
+                "Booking saved:",
+                bookingInfo
+            );
 
             response.textContent =
                 "Perfect! Your tee time request has been saved.";
@@ -197,6 +250,7 @@
 
             return;
         }
+
 
         // Start a booking conversation.
         if (
@@ -212,6 +266,7 @@
             return;
         }
 
+
         // Respond to pricing questions.
         if (
             message.includes("price") ||
@@ -225,6 +280,7 @@
             return;
         }
 
+
         // Respond to rental questions.
         if (
             message.includes("cart") ||
@@ -237,13 +293,15 @@
             return;
         }
 
+
         response.textContent =
             "I can help with tee times, pricing, hours, rentals, and course information. What can I help you with?";
 
         inputElement.value = "";
     }
 
-    // Makes the functions available to the inline HTML buttons.
+
+    // Makes these functions available to the HTML buttons.
     window.startDemo = startDemo;
     window.reply = reply;
 

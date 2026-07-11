@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CoursePilot AI</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            text-align: center;
+            padding-top: 80px;
+        }
+
+        .card {
+            background: white;
+            width: 500px;
+            margin: auto;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0px 5px 20px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #1b5e20;
+        }
+
+        button {
+            background: #1b5e20;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
+        input {
+            padding: 12px;
+            width: 70%;
+            margin-top: 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="card">
+
+<h1>CoursePilot AI</h1>
+
+<p>Your 24/7 AI golf course assistant.</p>
+
+<p>Never miss another booking call.</p>
+
+
+<button onclick="startDemo()">
+Start Demo
+</button>
+
+
+<div id="demo" style="display:none; margin-top:30px;">
+
+<h2>AI Receptionist Demo</h2>
+
+
+<p id="message">
+Hello! Thank you for calling CoursePilot AI. How can I help you today?
+</p>
+
+
+<input id="userInput" placeholder="Type your response">
+
+<br><br>
+
+<button onclick="reply()">
+Send
+</button>
+
+
+<p id="response"></p>
+
+
+</div>
+
+</div>
+
+
+<script>
+
+
+// Memory for the conversation
+let bookingStep = 0;
+
+let bookingInfo = {};
+
+
+
+function startDemo(){
+
+    document.getElementById("demo").style.display = "block";
+
+}
+
+
+
+
+function reply(){
+
+    let input = document.getElementById("userInput").value;
+
+    let response = document.getElementById("response");
+
+    let message = input.toLowerCase();
+
+
+
+    // Step 1: Getting the day
+    if(bookingStep === 1){
+
+        bookingInfo.day = input;
+
+        bookingStep = 2;
+
+        response.innerHTML =
+        "Great. What time would you like to play?";
+
+        return;
+
+    }
+
+
+
+    // Step 2: Getting the time
+    if(bookingStep === 2){
+
+        bookingInfo.time = input;
+
+        bookingStep = 3;
+
+        response.innerHTML =
+        "How many golfers will be playing?";
+
+        return;
+
+    }
+
+
+
+    // Step 3: Getting number of players
+    if(bookingStep === 3){
+
+        bookingInfo.players = input;
+
+        bookingStep = 4;
+
+        response.innerHTML =
+        "What is your name for the reservation?";
+
+        return;
+
+    }
+
+
+
+    // Step 4: Getting name
+    if(bookingStep === 4){
+
+        bookingInfo.name = input;
+
+
+        response.innerHTML =
+        "Perfect! I have your request for "
+        + bookingInfo.name
+        + " on "
+        + bookingInfo.day
+        + " at "
+        + bookingInfo.time
+        + " for "
+        + bookingInfo.players
+        + " golfers.";
+
+
+        console.log(bookingInfo);
+
+
+        bookingStep = 0;
+
+        bookingInfo = {};
+
+        return;
+
+    }
+
+
+
+
+    // Starting a booking
+    if(message.includes("book") || message.includes("tee time")){
+
+
+        bookingStep = 1;
+
+
+        response.innerHTML =
+        "Great! I can help you book a tee time. What day would you like to play?";
+
+
+    }
+
+
+
+    else if(message.includes("price") || message.includes("cost") || message.includes("fee")){
+
+
+        response.innerHTML =
+        "Our green fees vary depending on the day and time. Would you like me to check available options?";
+
+
+    }
+
+
+
+    else if(message.includes("cart") || message.includes("rental")){
+
+
+        response.innerHTML =
+        "We offer golf cart rentals and club rentals. How many players will need equipment?";
+
+
+    }
+
+
+
+    else {
+
+
+        response.innerHTML =
+        "I can help with tee times, pricing, hours, rentals, and course information. What can I help you with?";
+
+
+    }
+
+
+}
+
+
+</script>
+
+
+</body>
+</html>

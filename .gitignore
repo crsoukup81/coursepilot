@@ -1,0 +1,11 @@
+# Downloaded Node.js packages
+node_modules/
+
+# Private environment variables and credentials
+.env
+.env.*
+!.env.example
+
+# Windows and macOS system files
+Thumbs.db
+.DS_Store

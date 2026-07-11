@@ -1,6 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>CoursePilot AI</title>
 
     <style>
@@ -14,10 +17,11 @@
         .card {
             background: white;
             width: 500px;
+            max-width: 80%;
             margin: auto;
             padding: 40px;
             border-radius: 15px;
-            box-shadow: 0px 5px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
         }
 
         h1 {
@@ -45,215 +49,202 @@
             border-radius: 5px;
             border: 1px solid #ccc;
         }
-
     </style>
-
 </head>
-
 
 <body>
 
 <div class="card">
 
-<h1>CoursePilot AI</h1>
+    <h1>CoursePilot AI</h1>
 
-<p>Your 24/7 AI golf course assistant.</p>
+    <p>Your 24/7 AI golf course assistant.</p>
 
-<p>Never miss another booking call.</p>
+    <p>Never miss another booking call.</p>
 
+    <button onclick="startDemo()">
+        Start Demo
+    </button>
 
-<button onclick="startDemo()">
-Start Demo
-</button>
+    <div id="demo" style="display: none; margin-top: 30px;">
 
+        <h2>AI Receptionist Demo</h2>
 
-<div id="demo" style="display:none; margin-top:30px;">
+        <p id="message">
+            Hello! Thank you for calling CoursePilot AI. How can I help you today?
+        </p>
 
-<h2>AI Receptionist Demo</h2>
+        <input
+            id="userInput"
+            type="text"
+            placeholder="Type your response"
+        >
 
+        <br><br>
 
-<p id="message">
-Hello! Thank you for calling CoursePilot AI. How can I help you today?
-</p>
+        <button onclick="reply()">
+            Send
+        </button>
 
+        <p id="response"></p>
 
-<input id="userInput" placeholder="Type your response">
-
-<br><br>
-
-<button onclick="reply()">
-Send
-</button>
-
-
-<p id="response"></p>
-
-
-</div>
+    </div>
 
 </div>
 
+<script type="module">
 
-<script>
+    import { supabase } from "./supabase.js";
 
+    // Tracks which question the receptionist is currently asking.
+    let bookingStep = 0;
 
-// Memory for the conversation
-let bookingStep = 0;
+    // Temporarily stores the answers during the conversation.
+    let bookingInfo = {};
 
-let bookingInfo = {};
-
-
-
-function startDemo(){
-
-    document.getElementById("demo").style.display = "block";
-
-}
-
-
-
-
-function reply(){
-
-    let input = document.getElementById("userInput").value;
-
-    let response = document.getElementById("response");
-
-    let message = input.toLowerCase();
-
-
-
-    // Step 1: Getting the day
-    if(bookingStep === 1){
-
-        bookingInfo.day = input;
-
-        bookingStep = 2;
-
-        response.innerHTML =
-        "Great. What time would you like to play?";
-
-        return;
-
+    function startDemo() {
+        document.getElementById("demo").style.display = "block";
     }
 
+    async function reply() {
+        const inputElement = document.getElementById("userInput");
+        const response = document.getElementById("response");
 
+        const input = inputElement.value.trim();
+        const message = input.toLowerCase();
 
-    // Step 2: Getting the time
-    if(bookingStep === 2){
+        // Step 1: Get the requested day.
+        if (bookingStep === 1) {
+            bookingInfo.day = input;
+            bookingStep = 2;
 
-        bookingInfo.time = input;
+            response.textContent =
+                "Great. What time would you like to play?";
 
-        bookingStep = 3;
+            inputElement.value = "";
+            return;
+        }
 
-        response.innerHTML =
-        "How many golfers will be playing?";
+        // Step 2: Get the requested time.
+        if (bookingStep === 2) {
+            bookingInfo.time = input;
+            bookingStep = 3;
 
-        return;
+            response.textContent =
+                "How many golfers will be playing?";
 
+            inputElement.value = "";
+            return;
+        }
+
+        // Step 3: Get the number of players.
+        if (bookingStep === 3) {
+            bookingInfo.players = input;
+            bookingStep = 4;
+
+            response.textContent =
+                "What is your name for the reservation?";
+
+            inputElement.value = "";
+            return;
+        }
+
+        // Step 4: Get the name and save the booking.
+        if (bookingStep === 4) {
+            bookingInfo.name = input;
+
+            response.textContent =
+                "Saving your tee time request...";
+
+            const { error } = await supabase
+                .from("bookings")
+                .insert([
+                    {
+                        name: bookingInfo.name,
+                        day: bookingInfo.day,
+                        time: bookingInfo.time,
+                        players: bookingInfo.players
+                    }
+                ]);
+
+            if (error) {
+                console.error("Supabase booking error:", error);
+
+                response.textContent =
+                    "Sorry, your request could not be saved. Please try again.";
+
+                return;
+            }
+
+            // Keep this temporary browser copy so the current dashboard
+            // continues working until it is connected to Supabase.
+            localStorage.setItem(
+                "booking",
+                JSON.stringify(bookingInfo)
+            );
+
+            console.log("Booking saved:", bookingInfo);
+
+            response.textContent =
+                "Perfect! Your tee time request has been saved.";
+
+            bookingStep = 0;
+            bookingInfo = {};
+            inputElement.value = "";
+
+            return;
+        }
+
+        // Start a booking conversation.
+        if (
+            message.includes("book") ||
+            message.includes("tee time")
+        ) {
+            bookingStep = 1;
+
+            response.textContent =
+                "Great! I can help you book a tee time. What day would you like to play?";
+
+            inputElement.value = "";
+            return;
+        }
+
+        // Respond to pricing questions.
+        if (
+            message.includes("price") ||
+            message.includes("cost") ||
+            message.includes("fee")
+        ) {
+            response.textContent =
+                "Our green fees vary depending on the day and time. Would you like me to check available options?";
+
+            inputElement.value = "";
+            return;
+        }
+
+        // Respond to rental questions.
+        if (
+            message.includes("cart") ||
+            message.includes("rental")
+        ) {
+            response.textContent =
+                "We offer golf cart rentals and club rentals. How many players will need equipment?";
+
+            inputElement.value = "";
+            return;
+        }
+
+        response.textContent =
+            "I can help with tee times, pricing, hours, rentals, and course information. What can I help you with?";
+
+        inputElement.value = "";
     }
 
-
-
-    // Step 3: Getting number of players
-    if(bookingStep === 3){
-
-        bookingInfo.players = input;
-
-        bookingStep = 4;
-
-        response.innerHTML =
-        "What is your name for the reservation?";
-
-        return;
-
-    }
-
-
-
-    // Step 4: Getting name
-    if(bookingStep === 4){
-
-    bookingInfo.name = input;
-
-
-    response.innerHTML =
-    "Perfect! Your tee time request has been saved.";
-
-
-    // Save booking
-    localStorage.setItem(
-        "booking",
-        JSON.stringify(bookingInfo)
-    );
-
-
-    console.log(bookingInfo);
-
-
-    bookingStep = 0;
-
-    bookingInfo = {};
-
-    return;
-
-}
-
-
-
-
-    // Starting a booking
-    if(message.includes("book") || message.includes("tee time")){
-
-
-        bookingStep = 1;
-
-
-        response.innerHTML =
-        "Great! I can help you book a tee time. What day would you like to play?";
-
-
-    }
-
-
-
-    else if(message.includes("price") || message.includes("cost") || message.includes("fee")){
-
-
-        response.innerHTML =
-        "Our green fees vary depending on the day and time. Would you like me to check available options?";
-
-
-    }
-
-
-
-    else if(message.includes("cart") || message.includes("rental")){
-
-
-        response.innerHTML =
-        "We offer golf cart rentals and club rentals. How many players will need equipment?";
-
-
-    }
-
-
-
-    else {
-
-
-        response.innerHTML =
-        "I can help with tee times, pricing, hours, rentals, and course information. What can I help you with?";
-
-
-    }
-
-
-}
-
+    // Inline HTML buttons need these functions attached to the browser window.
+    window.startDemo = startDemo;
+    window.reply = reply;
 
 </script>
-
 
 </body>
 </html>

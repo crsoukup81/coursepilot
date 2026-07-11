@@ -820,7 +820,7 @@
         .booking-details {
             display: grid;
             grid-template-columns:
-                repeat(4, minmax(0, 1fr));
+                repeat(3, minmax(0, 1fr));
             gap: 10px;
         }
 
@@ -850,6 +850,25 @@
             font-size: 13px;
             font-weight: 900;
             color: var(--text);
+        }
+
+        .price-highlight {
+            border-color: #b7dcc4;
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--green-50),
+                    #ffffff
+                );
+        }
+
+        .price-highlight .detail-label {
+            color: var(--green-700);
+        }
+
+        .price-highlight .detail-value {
+            color: var(--green-800);
+            font-size: 14px;
         }
 
         .badge-group {
@@ -1623,6 +1642,11 @@
         "cancelled"
     ];
 
+    // Demo-only tax estimate for the current Michigan mock course.
+    // Before accepting real payments, this rate must come from
+    // course settings and be confirmed by the course's tax adviser.
+    const DEMO_TAX_RATE = 0.06;
+
     const loginSection =
         document.getElementById("loginSection");
 
@@ -1848,6 +1872,74 @@
     }
 
 
+    function formatCurrency(value) {
+        if (
+            value === null ||
+            value === undefined ||
+            value === ""
+        ) {
+            return "Not recorded";
+        }
+
+        const numberValue = Number(value);
+
+        if (!Number.isFinite(numberValue)) {
+            return "Not recorded";
+        }
+
+        return new Intl.NumberFormat(
+            "en-US",
+            {
+                style: "currency",
+                currency: "USD"
+            }
+        ).format(numberValue);
+    }
+
+
+    function calculateTaxedAmount(value) {
+        if (
+            value === null ||
+            value === undefined ||
+            value === ""
+        ) {
+            return null;
+        }
+
+        const numberValue = Number(value);
+
+        if (!Number.isFinite(numberValue)) {
+            return null;
+        }
+
+        return Number(
+            (
+                numberValue *
+                (1 + DEMO_TAX_RATE)
+            ).toFixed(2)
+        );
+    }
+
+
+    function formatTaxRate() {
+        return `${DEMO_TAX_RATE * 100}%`;
+    }
+
+
+    function formatRoundLength(holes) {
+        const holeCount = Number(holes);
+
+        if (
+            holeCount !== 9 &&
+            holeCount !== 18
+        ) {
+            return "Not recorded";
+        }
+
+        return `${holeCount} holes`;
+    }
+
+
     function getInitials(name) {
         const parts =
             String(name || "")
@@ -1885,12 +1977,15 @@
 
     function createDetailItem(
         label,
-        value
+        value,
+        highlight = false
     ) {
         const item =
             document.createElement("div");
 
-        item.className = "detail-item";
+        item.className = highlight
+            ? "detail-item price-highlight"
+            : "detail-item";
 
         const labelElement =
             document.createElement("span");
@@ -2296,10 +2391,52 @@
 
         details.appendChild(
             createDetailItem(
-                "Submitted",
-                formatTimestamp(
-                    booking.created_at
+                "Round",
+                formatRoundLength(
+                    booking.holes
                 )
+            )
+        );
+
+        details.appendChild(
+            createDetailItem(
+                "Price per golfer",
+                formatCurrency(
+                    booking.price_per_player
+                )
+            )
+        );
+
+        details.appendChild(
+            createDetailItem(
+                `Per golfer after demo tax (${formatTaxRate()})`,
+                formatCurrency(
+                    calculateTaxedAmount(
+                        booking.price_per_player
+                    )
+                ),
+                true
+            )
+        );
+
+        details.appendChild(
+            createDetailItem(
+                "Group subtotal",
+                formatCurrency(
+                    booking.estimated_total
+                )
+            )
+        );
+
+        details.appendChild(
+            createDetailItem(
+                `Estimated total after demo tax (${formatTaxRate()})`,
+                formatCurrency(
+                    calculateTaxedAmount(
+                        booking.estimated_total
+                    )
+                ),
+                true
             )
         );
 
@@ -2343,12 +2480,17 @@
         meta.className =
             "booking-meta";
 
+        const submittedText =
+            `Submitted ${formatTimestamp(
+                booking.created_at
+            )}`;
+
         meta.textContent =
             booking.viewed_at
-                ? `Reviewed ${formatTimestamp(
+                ? `${submittedText} • Reviewed ${formatTimestamp(
                     booking.viewed_at
                 )}`
-                : "This request has not been reviewed yet.";
+                : `${submittedText} • Not reviewed yet`;
 
         const actions =
             document.createElement("div");
@@ -2557,7 +2699,7 @@
                 await supabase
                     .from("bookings")
                     .select(
-                        "id, name, day, time, players, customer_phone, status, created_at, viewed_at, course_id"
+                        "id, name, day, time, players, customer_phone, holes, price_per_player, estimated_total, status, created_at, viewed_at, course_id"
                     )
                     .order(
                         "created_at",

@@ -2695,6 +2695,10 @@
     async function submitBooking(event) {
         event.preventDefault();
 
+        if (submitButton.disabled) {
+            return;
+        }
+
         if (!courseSettings) {
             showBookingMessage(
                 "Course settings are not available.",
@@ -2822,44 +2826,61 @@
             return;
         }
 
-        const pricePerPlayer =
-            pricing.pricePerPlayer;
-
-        const estimatedTotal =
-            pricing.subtotal;
-
         submitButton.disabled = true;
 
         showBookingMessage(
             "Submitting your tee-time request..."
         );
 
-        const databaseBookingRequest = {
-            course_id: COURSE_ID,
-            name,
-            day: selectedDate,
-            time: selectedTeeTime,
-            players: String(players),
-            customer_phone: phone,
-            holes,
-            price_per_player: pricePerPlayer,
-            estimated_total: estimatedTotal,
-            payment_method: paymentMethod
-        };
-
         try {
-            const { error } =
-                await supabase
-                    .from("bookings")
-                    .insert([
-                        databaseBookingRequest
-                    ]);
+            const { data, error } =
+                await supabase.rpc(
+                    "create_booking_reservation",
+                    {
+                        p_course_id: COURSE_ID,
+                        p_tee_date: selectedDate,
+                        p_tee_time: selectedTeeTime,
+                        p_players: players,
+                        p_name: name,
+                        p_customer_phone: phone,
+                        p_holes: holes,
+                        p_payment_method: paymentMethod
+                    }
+                );
 
             if (error) {
                 console.error(
                     "Supabase booking error:",
                     error
                 );
+
+                const safeErrorMessage =
+                    String(error.message || "")
+                        .toLowerCase();
+
+                const availabilityChanged =
+                    safeErrorMessage.includes(
+                        "tee time no longer has enough capacity"
+                    ) ||
+                    safeErrorMessage.includes(
+                        "tee time is blocked"
+                    ) ||
+                    safeErrorMessage.includes(
+                        "tee time does not exist"
+                    ) ||
+                    safeErrorMessage.includes(
+                        "tee time has already passed"
+                    );
+
+                if (availabilityChanged) {
+                    await loadAvailableTeeTimes();
+
+                    showBookingMessage(
+                        "That tee time is no longer available. Choose another available time.",
+                        "error"
+                    );
+                    return;
+                }
 
                 showBookingMessage(
                     "Your booking request could not be saved.",
@@ -2868,30 +2889,150 @@
                 return;
             }
 
-            localStorage.setItem(
-                "booking",
-                JSON.stringify(
-                    databaseBookingRequest
-                )
-            );
+            const reservation =
+                Array.isArray(data)
+                    ? data[0]
+                    : data;
+
+            const trustedPricePerPlayer =
+                Number(
+                    reservation?.trusted_price_per_player
+                );
+
+            const trustedSubtotal =
+                Number(reservation?.trusted_subtotal);
+
+            const trustedTaxRate =
+                Number(reservation?.trusted_tax_rate);
+
+            const trustedTaxAmount =
+                Number(reservation?.trusted_tax_amount);
+
+            const trustedTotal =
+                Number(reservation?.trusted_total);
+
+            const trustedCurrency =
+                String(
+                    reservation?.trusted_currency || ""
+                ).toLowerCase();
+
+            const trustedPricingIsComplete =
+                [
+                    reservation?.trusted_price_per_player,
+                    reservation?.trusted_subtotal,
+                    reservation?.trusted_tax_rate,
+                    reservation?.trusted_tax_amount,
+                    reservation?.trusted_total,
+                    reservation?.trusted_currency
+                ].every(
+                    (value) =>
+                        value !== null &&
+                        value !== undefined
+                );
+
+            const expectedReservationState =
+                paymentMethod === "online"
+                    ? "held"
+                    : "reserved";
+
+            const expectedPaymentStatus =
+                paymentMethod === "online"
+                    ? "pending"
+                    : "unpaid";
+
+            if (
+                !reservation ||
+                reservation.booking_id === null ||
+                reservation.booking_id === undefined ||
+                !trustedPricingIsComplete ||
+                reservation.reservation_state !==
+                    expectedReservationState ||
+                reservation.booking_payment_status !==
+                    expectedPaymentStatus ||
+                !Number.isFinite(trustedPricePerPlayer) ||
+                trustedPricePerPlayer < 0 ||
+                !Number.isFinite(trustedSubtotal) ||
+                trustedSubtotal < 0 ||
+                !Number.isFinite(trustedTaxRate) ||
+                trustedTaxRate < 0 ||
+                !Number.isFinite(trustedTaxAmount) ||
+                trustedTaxAmount < 0 ||
+                !Number.isFinite(trustedTotal) ||
+                trustedTotal < 0 ||
+                !/^[a-z]{3}$/.test(trustedCurrency)
+            ) {
+                console.error(
+                    "Supabase booking response was incomplete."
+                );
+
+                showBookingMessage(
+                    "Your reservation was received, but its confirmation details could not be displayed. Please contact the course before trying again.",
+                    "error"
+                );
+                return;
+            }
+
+            const formattedTrustedTotal =
+                new Intl.NumberFormat(
+                    "en-US",
+                    {
+                        style: "currency",
+                        currency:
+                            trustedCurrency.toUpperCase(),
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }
+                ).format(trustedTotal);
+
+            const storedBooking = {
+                booking_id: reservation.booking_id,
+                course_id: COURSE_ID,
+                name,
+                day: selectedDate,
+                time: selectedTeeTime,
+                players: String(players),
+                customer_phone: phone,
+                holes,
+                payment_method: paymentMethod,
+                reservation_status:
+                    reservation.reservation_state,
+                reservation_expires_at:
+                    reservation.hold_expires_at,
+                payment_status:
+                    reservation.booking_payment_status,
+                price_per_player:
+                    trustedPricePerPlayer,
+                estimated_total: trustedSubtotal,
+                tax_rate: trustedTaxRate,
+                tax_amount: trustedTaxAmount,
+                total_after_tax: trustedTotal,
+                currency: trustedCurrency
+            };
+
+            try {
+                localStorage.setItem(
+                    "booking",
+                    JSON.stringify(storedBooking)
+                );
+            } catch (storageError) {
+                console.warn(
+                    "Booking confirmation could not be stored locally:",
+                    storageError
+                );
+            }
 
             const paymentConfirmation =
                 paymentMethod === "online"
                     ? (
-                        " Online payment was selected, but no card " +
-                        "was charged yet."
+                        " Your tee time is held for online payment, " +
+                        "but no card has been charged yet."
                     )
-                    : " Payment will be due at the course.";
+                    : (
+                        " Your tee time is reserved and unpaid. " +
+                        "Payment will be due at the course."
+                    );
 
-            showBookingMessage(
-                `${holes}-hole request submitted. ` +
-                `Estimated total after tax: ` +
-                `${formatCurrency(
-                    pricing.totalAfterTax
-                )}.` +
-                paymentConfirmation,
-                "success"
-            );
+            await loadAvailableTeeTimes();
 
             availabilityRequestId += 1;
             bookingForm.reset();
@@ -2911,6 +3052,14 @@
                 "Waiting for your selections";
 
             updateBookingSummary();
+
+            showBookingMessage(
+                `${holes}-hole request submitted. ` +
+                `Total after tax: ` +
+                `${formattedTrustedTotal}.` +
+                paymentConfirmation,
+                "success"
+            );
         } catch (error) {
             console.error(
                 "Unexpected booking error:",

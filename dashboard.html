@@ -333,6 +333,22 @@
                 0 20px 36px rgba(23, 107, 73, 0.28);
         }
 
+        .text-button {
+            width: 100%;
+            margin-top: 14px;
+            border: none;
+            color: var(--green-700);
+            background: transparent;
+            font-size: 13px;
+            font-weight: 900;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        .text-button:hover {
+            color: var(--green-950);
+        }
+
         button:disabled {
             opacity: 0.58;
             cursor: not-allowed;
@@ -1253,9 +1269,12 @@
                 Manager access
             </p>
 
-            <h2>Welcome back</h2>
+            <h2 id="loginHeading">Welcome back</h2>
 
-            <p class="login-description">
+            <p
+                id="loginDescription"
+                class="login-description"
+            >
                 Sign in with your CoursePilot manager account.
             </p>
 
@@ -1293,6 +1312,54 @@
                     type="submit"
                 >
                     Sign In to Dashboard
+                </button>
+
+                <button
+                    id="forgotPasswordButton"
+                    class="text-button"
+                    type="button"
+                >
+                    Forgot your password?
+                </button>
+
+            </form>
+
+            <form id="recoveryForm" hidden>
+
+                <div class="form-group">
+                    <label for="newPasswordInput">
+                        New password
+                    </label>
+
+                    <input
+                        id="newPasswordInput"
+                        type="password"
+                        autocomplete="new-password"
+                        minlength="8"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPasswordInput">
+                        Confirm new password
+                    </label>
+
+                    <input
+                        id="confirmPasswordInput"
+                        type="password"
+                        autocomplete="new-password"
+                        minlength="8"
+                        required
+                    >
+                </div>
+
+                <button
+                    id="updatePasswordButton"
+                    class="primary-button"
+                    type="submit"
+                >
+                    Update Password
                 </button>
 
             </form>
@@ -1656,6 +1723,15 @@
     const loginForm =
         document.getElementById("loginForm");
 
+    const recoveryForm =
+        document.getElementById("recoveryForm");
+
+    const loginHeading =
+        document.getElementById("loginHeading");
+
+    const loginDescription =
+        document.getElementById("loginDescription");
+
     const emailInput =
         document.getElementById("emailInput");
 
@@ -1664,6 +1740,18 @@
 
     const loginButton =
         document.getElementById("loginButton");
+
+    const forgotPasswordButton =
+        document.getElementById("forgotPasswordButton");
+
+    const newPasswordInput =
+        document.getElementById("newPasswordInput");
+
+    const confirmPasswordInput =
+        document.getElementById("confirmPasswordInput");
+
+    const updatePasswordButton =
+        document.getElementById("updatePasswordButton");
 
     const loginMessage =
         document.getElementById("loginMessage");
@@ -1729,6 +1817,14 @@
     let activeFilter = "new";
     let toastTimeoutId = null;
 
+    const passwordRecoveryRequested =
+        window.location.hash.includes(
+            "type=recovery"
+        ) ||
+        new URLSearchParams(
+            window.location.search
+        ).get("type") === "recovery";
+
 
     function normalizeStatus(status) {
         return VALID_STATUSES.includes(status)
@@ -1757,13 +1853,62 @@
     }
 
 
-    function showLogin() {
+    function showLogin(
+        message = "",
+        messageType = ""
+    ) {
         loginSection.hidden = false;
         dashboardSection.hidden = true;
 
+        loginForm.hidden = false;
+        recoveryForm.hidden = true;
+
+        loginHeading.textContent = "Welcome back";
+        loginDescription.textContent =
+            "Sign in with your CoursePilot manager account.";
+
         loginForm.reset();
+        recoveryForm.reset();
         managerEmail.textContent = "";
         bookings = [];
+
+        loginMessage.className = messageType
+            ? `message ${messageType}`
+            : "message";
+
+        loginMessage.textContent = message;
+    }
+
+
+    function showPasswordRecovery() {
+        loginSection.hidden = false;
+        dashboardSection.hidden = true;
+
+        loginForm.hidden = true;
+        recoveryForm.hidden = false;
+
+        loginHeading.textContent = "Choose a new password";
+        loginDescription.textContent =
+            "Use at least 8 characters, then sign in with your new password.";
+
+        loginMessage.className = "message";
+        loginMessage.textContent = "";
+    }
+
+
+    async function verifyManagerAccess(user) {
+        const { data, error } =
+            await supabase
+                .from("course_members")
+                .select("course_id")
+                .eq("user_id", user.id)
+                .limit(1);
+
+        if (error) {
+            throw error;
+        }
+
+        return data.length > 0;
     }
 
 
@@ -2796,7 +2941,23 @@
                     "message error";
 
                 loginMessage.textContent =
-                    "Login failed. Check your email and password.";
+                    "That email and password did not match. Use Forgot your password? if needed.";
+
+                return;
+            }
+
+            const hasManagerAccess =
+                await verifyManagerAccess(
+                    data.user
+                );
+
+            if (!hasManagerAccess) {
+                await supabase.auth.signOut();
+
+                showLogin(
+                    "This account is not approved for a CoursePilot management dashboard.",
+                    "error"
+                );
 
                 return;
             }
@@ -2819,6 +2980,116 @@
                 "An unexpected login error occurred.";
         } finally {
             loginButton.disabled = false;
+        }
+    }
+
+
+    async function handleForgotPassword() {
+        const email = emailInput.value.trim();
+
+        if (!email) {
+            emailInput.reportValidity();
+            return;
+        }
+
+        forgotPasswordButton.disabled = true;
+
+        loginMessage.className = "message";
+        loginMessage.textContent =
+            "Sending a secure password reset link...";
+
+        try {
+            const redirectTo =
+                new URL(
+                    window.location.pathname,
+                    window.location.origin
+                ).href;
+
+            const { error } =
+                await supabase.auth
+                    .resetPasswordForEmail(
+                        email,
+                        { redirectTo }
+                    );
+
+            if (error) {
+                throw error;
+            }
+
+            loginMessage.className =
+                "message success";
+
+            loginMessage.textContent =
+                "If that email has an account, a password reset link is on the way.";
+        } catch (error) {
+            console.error(
+                "Password reset request failed:",
+                error
+            );
+
+            loginMessage.className =
+                "message error";
+
+            loginMessage.textContent =
+                "We could not send a reset link right now. Please try again shortly.";
+        } finally {
+            forgotPasswordButton.disabled = false;
+        }
+    }
+
+
+    async function handlePasswordUpdate(event) {
+        event.preventDefault();
+
+        const password = newPasswordInput.value;
+        const confirmation =
+            confirmPasswordInput.value;
+
+        if (password !== confirmation) {
+            loginMessage.className =
+                "message error";
+
+            loginMessage.textContent =
+                "The two passwords do not match.";
+
+            return;
+        }
+
+        updatePasswordButton.disabled = true;
+
+        loginMessage.className = "message";
+        loginMessage.textContent =
+            "Updating your password securely...";
+
+        try {
+            const { error } =
+                await supabase.auth.updateUser({
+                    password
+                });
+
+            if (error) {
+                throw error;
+            }
+
+            await supabase.auth.signOut();
+
+            showLogin(
+                "Password updated. You can now sign in with your new password.",
+                "success"
+            );
+        } catch (error) {
+            console.error(
+                "Password update failed:",
+                error
+            );
+
+            loginMessage.className =
+                "message error";
+
+            loginMessage.textContent =
+                "That reset link may have expired. Request a new link and try again.";
+        } finally {
+            updatePasswordButton.disabled = false;
         }
     }
 
@@ -2852,23 +3123,52 @@
 
 
     async function initializeDashboard() {
+        if (passwordRecoveryRequested) {
+            showPasswordRecovery();
+            return;
+        }
+
         const { data, error } =
-            await supabase.auth
-                .getSession();
+            await supabase.auth.getUser();
 
         if (error) {
-            console.error(
-                "Session check failed:",
-                error
-            );
-
             showLogin();
             return;
         }
 
-        if (data.session) {
+        if (data.user) {
+            try {
+                const hasManagerAccess =
+                    await verifyManagerAccess(
+                        data.user
+                    );
+
+                if (!hasManagerAccess) {
+                    await supabase.auth.signOut();
+
+                    showLogin(
+                        "This account is not approved for a CoursePilot management dashboard.",
+                        "error"
+                    );
+
+                    return;
+                }
+            } catch (membershipError) {
+                console.error(
+                    "Manager access check failed:",
+                    membershipError
+                );
+
+                showLogin(
+                    "We could not verify dashboard access. Please sign in again.",
+                    "error"
+                );
+
+                return;
+            }
+
             await showDashboard(
-                data.session.user.email ||
+                data.user.email ||
                 "Signed-in manager"
             );
 
@@ -2937,9 +3237,30 @@
     );
 
 
+    forgotPasswordButton.addEventListener(
+        "click",
+        handleForgotPassword
+    );
+
+
+    recoveryForm.addEventListener(
+        "submit",
+        handlePasswordUpdate
+    );
+
+
     logoutButton.addEventListener(
         "click",
         handleLogout
+    );
+
+
+    supabase.auth.onAuthStateChange(
+        (event) => {
+            if (event === "PASSWORD_RECOVERY") {
+                showPasswordRecovery();
+            }
+        }
     );
 
 

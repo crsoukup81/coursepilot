@@ -698,6 +698,90 @@
             color: var(--green-700);
         }
 
+        .payment-options {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .payment-option label {
+            min-height: 112px;
+            margin: 0;
+            padding: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            background: white;
+            cursor: pointer;
+            transition:
+                transform 0.16s ease,
+                border-color 0.16s ease,
+                box-shadow 0.16s ease,
+                background 0.16s ease;
+        }
+
+        .payment-option label:hover {
+            transform: translateY(-2px);
+            border-color: #afd3bc;
+            box-shadow: var(--shadow-small);
+        }
+
+        .payment-copy {
+            display: grid;
+            gap: 5px;
+        }
+
+        .payment-copy strong {
+            font-size: 17px;
+            color: var(--green-950);
+        }
+
+        .payment-copy span {
+            font-size: 12px;
+            line-height: 1.5;
+            color: var(--muted);
+        }
+
+        .payment-icon {
+            width: 43px;
+            height: 43px;
+            flex: 0 0 auto;
+            display: grid;
+            place-items: center;
+            border-radius: 13px;
+            font-size: 19px;
+            background: var(--green-50);
+        }
+
+        .payment-option input:checked + label {
+            border-color: var(--green-600);
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--green-50),
+                    #ffffff
+                );
+            box-shadow:
+                0 0 0 3px rgba(46, 163, 110, 0.12),
+                var(--shadow-small);
+        }
+
+        .payment-option input:checked + label .payment-copy strong {
+            color: var(--green-700);
+        }
+
+        .payment-warning {
+            margin: 10px 0 0;
+            padding: 11px 12px;
+            border: 1px solid #efe0ad;
+            border-radius: 10px;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #66541b;
+            background: #fff9e8;
+        }
+
         .field-note {
             margin: 9px 0 0;
             font-size: 12px;
@@ -1152,7 +1236,8 @@
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
 
-            .hole-options {
+            .hole-options,
+            .payment-options {
                 grid-template-columns: 1fr;
             }
 
@@ -1463,6 +1548,79 @@
                                 Enter a 10-digit U.S. phone number.
                             </p>
                         </div>
+
+                        <div class="form-group full-width">
+                            <span class="field-label">
+                                Payment preference
+                            </span>
+
+                            <div
+                                id="paymentOptions"
+                                class="choice-grid payment-options"
+                            >
+                                <div class="choice-option payment-option">
+                                    <input
+                                        id="payAtCourse"
+                                        name="paymentMethod"
+                                        type="radio"
+                                        value="pay_at_course"
+                                        required
+                                    >
+
+                                    <label for="payAtCourse">
+                                        <span class="payment-copy">
+                                            <strong>Pay at the course</strong>
+                                            <span>
+                                                Submit the request now and pay
+                                                when you arrive.
+                                            </span>
+                                        </span>
+
+                                        <span
+                                            class="payment-icon"
+                                            aria-hidden="true"
+                                        >
+                                            ⛳
+                                        </span>
+                                    </label>
+                                </div>
+
+                                <div class="choice-option payment-option">
+                                    <input
+                                        id="payOnline"
+                                        name="paymentMethod"
+                                        type="radio"
+                                        value="online"
+                                    >
+
+                                    <label for="payOnline">
+                                        <span class="payment-copy">
+                                            <strong>Pay online</strong>
+                                            <span>
+                                                Use secure hosted checkout once
+                                                the Stripe test connection is added.
+                                            </span>
+                                        </span>
+
+                                        <span
+                                            class="payment-icon"
+                                            aria-hidden="true"
+                                        >
+                                            💳
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <p
+                                id="paymentNote"
+                                class="payment-warning"
+                            >
+                                Online payment is not active yet. Selecting it
+                                records the preference, but no card will be
+                                charged during this step.
+                            </p>
+                        </div>
                     </div>
 
                     <button
@@ -1514,6 +1672,13 @@
                     <div class="summary-item">
                         <span class="summary-label">Round</span>
                         <span id="summaryHoles" class="summary-value">
+                            Not selected
+                        </span>
+                    </div>
+
+                    <div class="summary-item">
+                        <span class="summary-label">Payment</span>
+                        <span id="summaryPayment" class="summary-value">
                             Not selected
                         </span>
                     </div>
@@ -1600,6 +1765,9 @@
     const holeOptions =
         document.getElementById("holeOptions");
 
+    const paymentOptions =
+        document.getElementById("paymentOptions");
+
     const teeTimeArea =
         document.getElementById("teeTimeArea");
 
@@ -1629,6 +1797,9 @@
 
     const summaryHoles =
         document.getElementById("summaryHoles");
+
+    const summaryPayment =
+        document.getElementById("summaryPayment");
 
     const summaryPrice =
         document.getElementById("summaryPrice");
@@ -1838,6 +2009,41 @@
         )
             ? holeCount
             : null;
+    }
+
+
+    function getSelectedPaymentMethod() {
+        const selectedPaymentMethod =
+            document.querySelector(
+                'input[name="paymentMethod"]:checked'
+            );
+
+        if (!selectedPaymentMethod) {
+            return null;
+        }
+
+        const paymentMethod =
+            selectedPaymentMethod.value;
+
+        return (
+            paymentMethod === "pay_at_course" ||
+            paymentMethod === "online"
+        )
+            ? paymentMethod
+            : null;
+    }
+
+
+    function formatPaymentMethod(paymentMethod) {
+        if (paymentMethod === "pay_at_course") {
+            return "Pay at course";
+        }
+
+        if (paymentMethod === "online") {
+            return "Pay online";
+        }
+
+        return "Not selected";
     }
 
 
@@ -2260,6 +2466,8 @@
 
         const players = getSelectedPlayerCount();
         const holes = getSelectedHoleCount();
+        const paymentMethod =
+            getSelectedPaymentMethod();
 
         summaryPlayers.textContent =
             players === null
@@ -2270,6 +2478,11 @@
             holes === null
                 ? "Not selected"
                 : `${holes} holes`;
+
+        summaryPayment.textContent =
+            formatPaymentMethod(
+                paymentMethod
+            );
 
         const pricing =
             getPricingBreakdown(
@@ -2492,6 +2705,8 @@
 
         const players = getSelectedPlayerCount();
         const holes = getSelectedHoleCount();
+        const paymentMethod =
+            getSelectedPaymentMethod();
         const selectedDate = bookingDate.value;
         const name = customerName.value.trim();
         const phone = customerPhone.value.trim();
@@ -2501,6 +2716,7 @@
             !selectedTeeTime ||
             players === null ||
             holes === null ||
+            paymentMethod === null ||
             !name ||
             !phone
         ) {
@@ -2563,6 +2779,17 @@
         }
 
         if (
+            paymentMethod !== "pay_at_course" &&
+            paymentMethod !== "online"
+        ) {
+            showBookingMessage(
+                "Choose how you would like to pay.",
+                "error"
+            );
+            return;
+        }
+
+        if (
             name.length < 2 ||
             name.length > 100
         ) {
@@ -2616,7 +2843,8 @@
             customer_phone: phone,
             holes,
             price_per_player: pricePerPlayer,
-            estimated_total: estimatedTotal
+            estimated_total: estimatedTotal,
+            payment_method: paymentMethod
         };
 
         try {
@@ -2647,12 +2875,21 @@
                 )
             );
 
+            const paymentConfirmation =
+                paymentMethod === "online"
+                    ? (
+                        " Online payment was selected, but no card " +
+                        "was charged yet."
+                    )
+                    : " Payment will be due at the course.";
+
             showBookingMessage(
                 `${holes}-hole request submitted. ` +
                 `Estimated total after tax: ` +
                 `${formatCurrency(
                     pricing.totalAfterTax
-                )}.`,
+                )}.` +
+                paymentConfirmation,
                 "success"
             );
 
@@ -2748,6 +2985,14 @@
             assistantResponse.textContent =
                 "Choose 9 holes for a shorter round or 18 holes for the full course experience.";
         } else if (
+            message.includes("pay") ||
+            message.includes("payment") ||
+            message.includes("online") ||
+            message.includes("card")
+        ) {
+            assistantResponse.textContent =
+                "Choose Pay at the course or Pay online. Online checkout is not active during this step, so selecting it will not charge a card yet.";
+        } else if (
             message.includes("cart") ||
             message.includes("rental")
         ) {
@@ -2807,6 +3052,12 @@
 
 
     holeOptions.addEventListener(
+        "change",
+        updateBookingSummary
+    );
+
+
+    paymentOptions.addEventListener(
         "change",
         updateBookingSummary
     );

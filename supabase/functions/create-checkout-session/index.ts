@@ -22,6 +22,10 @@ const RETURN_URLS =
             "https://crsoukup81.github.io/coursepilot/"
         ],
         [
+            "https://coursepilotgolf.netlify.app",
+            "https://coursepilotgolf.netlify.app/"
+        ],
+        [
             "http://127.0.0.1:5173",
             "http://127.0.0.1:5173/"
         ],

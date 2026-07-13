@@ -6,3 +6,6 @@ verify_jwt = false
 
 [functions.booking-api]
 verify_jwt = false
+
+[functions.ai-receptionist]
+verify_jwt = false

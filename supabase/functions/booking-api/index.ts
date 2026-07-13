@@ -18,6 +18,7 @@ const UUID_PATTERN =
 const ALLOWED_ORIGINS =
     new Set<string>([
         "https://crsoukup81.github.io",
+        "https://coursepilotgolf.netlify.app",
         "http://127.0.0.1:5173",
         "http://localhost:5173"
     ]);

@@ -1848,6 +1848,10 @@
 </section>
 
 <script type="module">
+    import {
+        FunctionsHttpError
+    } from "@supabase/supabase-js";
+
     import { supabase } from "./supabase.js";
 
     const DEFAULT_COURSE_SLUG = "demo-course";
@@ -2494,19 +2498,36 @@
                         const remainingPlayers =
                             Number(slot.remaining_players);
 
+                        const providerSlotId =
+                            typeof slot.provider_slot_id ===
+                                "string"
+                                ? slot.provider_slot_id.trim()
+                                : null;
+
+                        const providerSlotIdIsValid =
+                            slot.provider_slot_id === null ||
+                            slot.provider_slot_id === undefined ||
+                            (
+                                providerSlotId !== null &&
+                                providerSlotId.length >= 1 &&
+                                providerSlotId.length <= 200
+                            );
+
                         if (
                             !time ||
                             !Number.isInteger(
                                 remainingPlayers
                             ) ||
-                            remainingPlayers < 1
+                            remainingPlayers < 1 ||
+                            !providerSlotIdIsValid
                         ) {
                             return null;
                         }
 
                         return {
                             time,
-                            remainingPlayers
+                            remainingPlayers,
+                            providerSlotId
                         };
                     })
                     .filter((slot) => slot !== null);
@@ -3350,12 +3371,19 @@
             return;
         }
 
+        const selectedSlot =
+            availableTeeTimes.find(
+                (slot) =>
+                    slot.time === selectedTeeTime
+            );
+
         if (
             !isSelectedTimeValid(
                 selectedTeeTime,
                 selectedDate,
                 players
-            )
+            ) ||
+            !selectedSlot
         ) {
             showBookingMessage(
                 "Choose one of the currently available tee times.",
@@ -3440,43 +3468,50 @@
 
         try {
             const { data, error } =
-                await supabase.rpc(
-                    "create_booking_reservation",
+                await supabase.functions.invoke(
+                    "booking-api",
                     {
-                        p_course_id: activeCourse.id,
-                        p_tee_date: selectedDate,
-                        p_tee_time: selectedTeeTime,
-                        p_players: players,
-                        p_name: name,
-                        p_customer_phone: phone,
-                        p_holes: holes,
-                        p_payment_method: paymentMethod
+                        body: {
+                            operation:
+                                "create_reservation",
+                            course_id: activeCourse.id,
+                            tee_date: selectedDate,
+                            tee_time: selectedTeeTime,
+                            provider_slot_id:
+                                selectedSlot.providerSlotId,
+                            players,
+                            name,
+                            customer_phone: phone,
+                            holes,
+                            payment_method: paymentMethod
+                        }
                     }
                 );
 
             if (error) {
+                let functionError = null;
+
+                if (error instanceof FunctionsHttpError) {
+                    try {
+                        functionError =
+                            await error.context.json();
+                    } catch (parseError) {
+                        console.warn(
+                            "Booking API error response could not be read:",
+                            parseError
+                        );
+                    }
+                }
+
                 console.error(
-                    "Supabase booking error:",
-                    error
+                    "Booking API reservation error:",
+                    error,
+                    functionError
                 );
 
-                const safeErrorMessage =
-                    String(error.message || "")
-                        .toLowerCase();
-
                 const availabilityChanged =
-                    safeErrorMessage.includes(
-                        "tee time no longer has enough capacity"
-                    ) ||
-                    safeErrorMessage.includes(
-                        "tee time is blocked"
-                    ) ||
-                    safeErrorMessage.includes(
-                        "tee time does not exist"
-                    ) ||
-                    safeErrorMessage.includes(
-                        "tee time has already passed"
-                    );
+                    functionError?.code ===
+                        "AVAILABILITY_CHANGED";
 
                 if (availabilityChanged) {
                     await loadAvailableTeeTimes();
@@ -3496,9 +3531,7 @@
             }
 
             const reservation =
-                Array.isArray(data)
-                    ? data[0]
-                    : data;
+                data?.reservation;
 
             const trustedPricePerPlayer =
                 Number(

@@ -14,6 +14,8 @@ export {
     type AvailableTeeTime,
     type BookingProvider,
     type BookingProviderContext,
+    type CreateReservationInput,
+    type ReservationResult,
     type SearchAvailabilityInput
 } from "./types.ts";
 
@@ -29,7 +31,7 @@ export function getBookingProvider(
         default:
             throw new BookingProviderError(
                 "PROVIDER_NOT_SUPPORTED",
-                "Tee-time availability is not configured for this course.",
+                "Online booking is not configured for this course.",
                 503
             );
     }

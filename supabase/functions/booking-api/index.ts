@@ -27,7 +27,13 @@ type BookingApiRequest = {
     operation?: unknown;
     course_id?: unknown;
     tee_date?: unknown;
+    tee_time?: unknown;
+    provider_slot_id?: unknown;
     players?: unknown;
+    name?: unknown;
+    customer_phone?: unknown;
+    holes?: unknown;
+    payment_method?: unknown;
 };
 
 
@@ -107,6 +113,54 @@ function getDate(value: unknown) {
 }
 
 
+function getTime(value: unknown) {
+    const match =
+        String(value ?? "")
+            .trim()
+            .match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+
+    return match
+        ? `${match[1]}:${match[2]}`
+        : null;
+}
+
+
+function getProviderSlotId(value: unknown) {
+    if (
+        value === null ||
+        value === undefined
+    ) {
+        return {
+            valid: true,
+            value: null
+        };
+    }
+
+    if (typeof value !== "string") {
+        return {
+            valid: false,
+            value: null
+        };
+    }
+
+    const providerSlotId = value.trim();
+
+    return {
+        valid:
+            providerSlotId.length >= 1 &&
+            providerSlotId.length <= 200,
+        value: providerSlotId || null
+    };
+}
+
+
+function getOperationErrorMessage(operation: string) {
+    return operation === "create_reservation"
+        ? "The reservation could not be completed."
+        : "Tee-time availability is temporarily unavailable.";
+}
+
+
 Deno.serve(async (request) => {
     const origin =
         request.headers.get("origin") || "";
@@ -146,11 +200,24 @@ Deno.serve(async (request) => {
     let apiRequest: BookingApiRequest;
 
     try {
-        apiRequest = await request.json();
+        const requestBody = await request.json();
+
+        if (
+            !requestBody ||
+            typeof requestBody !== "object" ||
+            Array.isArray(requestBody)
+        ) {
+            throw new Error("Invalid request body.");
+        }
+
+        apiRequest = requestBody as BookingApiRequest;
     } catch {
         return jsonResponse(
             origin,
-            { error: "The availability request was invalid." },
+            {
+                error: "The booking request was invalid.",
+                code: "INVALID_REQUEST"
+            },
             400
         );
     }
@@ -168,7 +235,10 @@ Deno.serve(async (request) => {
         Number(apiRequest.players);
 
     if (
-        operation !== "search_availability" ||
+        (
+            operation !== "search_availability" &&
+            operation !== "create_reservation"
+        ) ||
         !UUID_PATTERN.test(courseId) ||
         !teeDate ||
         !Number.isInteger(players) ||
@@ -177,7 +247,54 @@ Deno.serve(async (request) => {
     ) {
         return jsonResponse(
             origin,
-            { error: "The availability request was invalid." },
+            {
+                error: "The booking request was invalid.",
+                code: "INVALID_REQUEST"
+            },
+            400
+        );
+    }
+
+    const teeTime = getTime(apiRequest.tee_time);
+    const providerSlot =
+        getProviderSlotId(apiRequest.provider_slot_id);
+    const customerName =
+        typeof apiRequest.name === "string"
+            ? apiRequest.name.trim()
+            : "";
+    const customerPhone =
+        typeof apiRequest.customer_phone === "string"
+            ? apiRequest.customer_phone.trim()
+            : "";
+    const holes = Number(apiRequest.holes);
+    const paymentMethod =
+        typeof apiRequest.payment_method === "string"
+            ? apiRequest.payment_method.trim()
+            : "";
+
+    if (
+        operation === "create_reservation" &&
+        (
+            !teeTime ||
+            !providerSlot.valid ||
+            customerName.length < 2 ||
+            customerName.length > 100 ||
+            !/^\d{3}-\d{3}-\d{4}$/.test(
+                customerPhone
+            ) ||
+            (holes !== 9 && holes !== 18) ||
+            (
+                paymentMethod !== "pay_at_course" &&
+                paymentMethod !== "online"
+            )
+        )
+    ) {
+        return jsonResponse(
+            origin,
+            {
+                error: "The reservation request was invalid.",
+                code: "INVALID_RESERVATION_REQUEST"
+            },
             400
         );
     }
@@ -206,7 +323,7 @@ Deno.serve(async (request) => {
 
         return jsonResponse(
             origin,
-            { error: "Tee-time availability is temporarily unavailable." },
+            { error: getOperationErrorMessage(operation) },
             500
         );
     }
@@ -247,7 +364,7 @@ Deno.serve(async (request) => {
 
         return jsonResponse(
             origin,
-            { error: "Tee-time availability is temporarily unavailable." },
+            { error: getOperationErrorMessage(operation) },
             500
         );
     }
@@ -279,7 +396,7 @@ Deno.serve(async (request) => {
 
         return jsonResponse(
             origin,
-            { error: "Tee-time availability is temporarily unavailable." },
+            { error: getOperationErrorMessage(operation) },
             500
         );
     }
@@ -290,7 +407,10 @@ Deno.serve(async (request) => {
     ) {
         return jsonResponse(
             origin,
-            { error: "Tee-time availability is not configured for this course." },
+            {
+                error: "Online booking is not configured for this course.",
+                code: "BOOKING_NOT_CONFIGURED"
+            },
             503
         );
     }
@@ -305,24 +425,71 @@ Deno.serve(async (request) => {
             }
         );
 
-        const teeTimes =
-            await provider.searchAvailability({
+        if (operation === "search_availability") {
+            const teeTimes =
+                await provider.searchAvailability({
+                    courseId,
+                    teeDate,
+                    players
+                });
+
+            return jsonResponse(
+                origin,
+                {
+                    provider: integration.provider_key,
+                    tee_times: teeTimes.map((teeTime) => ({
+                        time: teeTime.time,
+                        remaining_players:
+                            teeTime.remainingPlayers,
+                        provider_slot_id:
+                            teeTime.providerSlotId
+                    }))
+                }
+            );
+        }
+
+        const reservation =
+            await provider.createReservation({
                 courseId,
                 teeDate,
-                players
+                teeTime: teeTime as string,
+                providerSlotId: providerSlot.value,
+                players,
+                customerName,
+                customerPhone,
+                holes: holes as 9 | 18,
+                paymentMethod: paymentMethod as
+                    "pay_at_course" | "online"
             });
 
         return jsonResponse(
             origin,
             {
                 provider: integration.provider_key,
-                tee_times: teeTimes.map((teeTime) => ({
-                    time: teeTime.time,
-                    remaining_players:
-                        teeTime.remainingPlayers,
-                    provider_slot_id:
-                        teeTime.providerSlotId
-                }))
+                reservation: {
+                    booking_id: reservation.bookingId,
+                    provider_reservation_id:
+                        reservation.providerReservationId,
+                    reservation_state:
+                        reservation.reservationState,
+                    hold_expires_at:
+                        reservation.holdExpiresAt,
+                    booking_payment_status:
+                        reservation.paymentStatus,
+                    trusted_price_per_player:
+                        reservation.pricePerPlayer,
+                    trusted_subtotal:
+                        reservation.subtotal,
+                    trusted_tax_rate:
+                        reservation.taxRate,
+                    trusted_tax_amount:
+                        reservation.taxAmount,
+                    trusted_total: reservation.total,
+                    trusted_currency:
+                        reservation.currency,
+                    checkout_access_token:
+                        reservation.checkoutAccessToken
+                }
             }
         );
     } catch (error) {
@@ -334,7 +501,10 @@ Deno.serve(async (request) => {
 
             return jsonResponse(
                 origin,
-                { error: error.message },
+                {
+                    error: error.message,
+                    code: error.code
+                },
                 error.status
             );
         }
@@ -346,7 +516,7 @@ Deno.serve(async (request) => {
 
         return jsonResponse(
             origin,
-            { error: "Tee-time availability is temporarily unavailable." },
+            { error: getOperationErrorMessage(operation) },
             500
         );
     }

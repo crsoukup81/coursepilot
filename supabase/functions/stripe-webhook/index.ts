@@ -39,6 +39,27 @@ function getPaymentIntentId(
 }
 
 
+function getReleasePaymentStatus(
+    eventType: string
+) {
+    if (
+        eventType ===
+        "checkout.session.expired"
+    ) {
+        return "cancelled";
+    }
+
+    if (
+        eventType ===
+        "checkout.session.async_payment_failed"
+    ) {
+        return "failed";
+    }
+
+    return null;
+}
+
+
 Deno.serve(async (request) => {
     if (request.method !== "POST") {
         return jsonResponse(
@@ -115,11 +136,18 @@ Deno.serve(async (request) => {
         );
     }
 
+    const isSuccessfulPaymentEvent =
+        event.type ===
+            "checkout.session.completed" ||
+        event.type ===
+            "checkout.session.async_payment_succeeded";
+
+    const releasePaymentStatus =
+        getReleasePaymentStatus(event.type);
+
     if (
-        event.type !==
-            "checkout.session.completed" &&
-        event.type !==
-            "checkout.session.async_payment_succeeded"
+        !isSuccessfulPaymentEvent &&
+        !releasePaymentStatus
     ) {
         return jsonResponse({ received: true });
     }
@@ -127,13 +155,6 @@ Deno.serve(async (request) => {
     const session =
         event.data.object as
             Stripe.Checkout.Session;
-
-    if (session.payment_status !== "paid") {
-        return jsonResponse({
-            received: true,
-            payment_pending: true
-        });
-    }
 
     const bookingId =
         String(
@@ -145,28 +166,13 @@ Deno.serve(async (request) => {
             session.metadata?.course_id || ""
         ).trim();
 
-    const paymentIntentId =
-        getPaymentIntentId(
-            session.payment_intent
-        );
-
-    const amountTotal =
-        Number(session.amount_total);
-
-    const currency =
-        String(session.currency || "")
-            .toLowerCase();
-
     if (
         !/^[1-9]\d{0,18}$/.test(bookingId) ||
-        !courseId ||
-        !paymentIntentId ||
-        !Number.isSafeInteger(amountTotal) ||
-        amountTotal <= 0 ||
-        !/^[a-z]{3}$/.test(currency)
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+            .test(courseId)
     ) {
         console.error(
-            "Paid Stripe session has incomplete booking metadata."
+            "Stripe session has incomplete booking metadata."
         );
 
         return jsonResponse(
@@ -185,6 +191,87 @@ Deno.serve(async (request) => {
             }
         }
     );
+
+    if (releasePaymentStatus) {
+        const {
+            data: releaseResults,
+            error: releaseError
+        } = await supabaseAdmin.rpc(
+            "release_stripe_checkout_hold",
+            {
+                p_booking_id: bookingId,
+                p_course_id: courseId,
+                p_stripe_checkout_session_id:
+                    session.id,
+                p_payment_status:
+                    releasePaymentStatus
+            }
+        );
+
+        if (releaseError) {
+            console.error(
+                "Stripe checkout hold release failed:",
+                releaseError.message
+            );
+
+            return jsonResponse(
+                { error: "Checkout hold could not be released." },
+                500
+            );
+        }
+
+        const releaseResult =
+            Array.isArray(releaseResults)
+                ? releaseResults[0]
+                : null;
+
+        return jsonResponse({
+            received: true,
+            booking_id:
+                releaseResult?.booking_id == null
+                    ? null
+                    : String(
+                        releaseResult.booking_id
+                    ),
+            released:
+                releaseResult?.released === true
+        });
+    }
+
+    if (session.payment_status !== "paid") {
+        return jsonResponse({
+            received: true,
+            payment_pending: true
+        });
+    }
+
+    const paymentIntentId =
+        getPaymentIntentId(
+            session.payment_intent
+        );
+
+    const amountTotal =
+        Number(session.amount_total);
+
+    const currency =
+        String(session.currency || "")
+            .toLowerCase();
+
+    if (
+        !paymentIntentId ||
+        !Number.isSafeInteger(amountTotal) ||
+        amountTotal <= 0 ||
+        !/^[a-z]{3}$/.test(currency)
+    ) {
+        console.error(
+            "Paid Stripe session has incomplete booking metadata."
+        );
+
+        return jsonResponse(
+            { error: "Payment details were incomplete." },
+            400
+        );
+    }
 
     const {
         data: booking,

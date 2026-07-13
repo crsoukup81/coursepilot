@@ -836,7 +836,7 @@
         .booking-details {
             display: grid;
             grid-template-columns:
-                repeat(3, minmax(0, 1fr));
+                repeat(4, minmax(0, 1fr));
             gap: 10px;
         }
 
@@ -866,25 +866,6 @@
             font-size: 13px;
             font-weight: 900;
             color: var(--text);
-        }
-
-        .price-highlight {
-            border-color: #b7dcc4;
-            background:
-                linear-gradient(
-                    135deg,
-                    var(--green-50),
-                    #ffffff
-                );
-        }
-
-        .price-highlight .detail-label {
-            color: var(--green-700);
-        }
-
-        .price-highlight .detail-value {
-            color: var(--green-800);
-            font-size: 14px;
         }
 
         .badge-group {
@@ -930,6 +911,32 @@
         .status-cancelled {
             color: var(--red-700);
             background: var(--red-100);
+        }
+
+        .payment-paid {
+            color: var(--green-700);
+            background: var(--green-100);
+        }
+
+        .payment-pending {
+            color: var(--amber-800);
+            background: var(--amber-100);
+        }
+
+        .payment-unpaid {
+            color: var(--gray-700);
+            background: var(--gray-100);
+        }
+
+        .payment-failed,
+        .payment-cancelled {
+            color: var(--red-700);
+            background: var(--red-100);
+        }
+
+        .payment-refunded {
+            color: var(--blue-700);
+            background: var(--blue-100);
         }
 
         .booking-card-footer {
@@ -1709,11 +1716,6 @@
         "cancelled"
     ];
 
-    // Demo-only tax estimate for the current Michigan mock course.
-    // Before accepting real payments, this rate must come from
-    // course settings and be confirmed by the course's tax adviser.
-    const DEMO_TAX_RATE = 0.06;
-
     const loginSection =
         document.getElementById("loginSection");
 
@@ -2017,7 +2019,10 @@
     }
 
 
-    function formatCurrency(value) {
+    function formatCurrency(
+        value,
+        currency
+    ) {
         if (
             value === null ||
             value === undefined ||
@@ -2026,48 +2031,29 @@
             return "Not recorded";
         }
 
-        const numberValue = Number(value);
+        const amount = Number(value);
+        const currencyCode =
+            String(currency || "")
+                .trim()
+                .toUpperCase();
 
-        if (!Number.isFinite(numberValue)) {
+        if (
+            !Number.isFinite(amount)
+        ) {
             return "Not recorded";
+        }
+
+        if (!/^[A-Z]{3}$/.test(currencyCode)) {
+            return `${amount.toFixed(2)} (currency not recorded)`;
         }
 
         return new Intl.NumberFormat(
             "en-US",
             {
                 style: "currency",
-                currency: "USD"
+                currency: currencyCode
             }
-        ).format(numberValue);
-    }
-
-
-    function calculateTaxedAmount(value) {
-        if (
-            value === null ||
-            value === undefined ||
-            value === ""
-        ) {
-            return null;
-        }
-
-        const numberValue = Number(value);
-
-        if (!Number.isFinite(numberValue)) {
-            return null;
-        }
-
-        return Number(
-            (
-                numberValue *
-                (1 + DEMO_TAX_RATE)
-            ).toFixed(2)
-        );
-    }
-
-
-    function formatTaxRate() {
-        return `${DEMO_TAX_RATE * 100}%`;
+        ).format(amount);
     }
 
 
@@ -2082,6 +2068,59 @@
         }
 
         return `${holeCount} holes`;
+    }
+
+
+    function formatPaymentMethod(paymentMethod) {
+        if (paymentMethod === "online") {
+            return "Online";
+        }
+
+        if (paymentMethod === "pay_at_course") {
+            return "Pay at course";
+        }
+
+        return "Not recorded";
+    }
+
+
+    function formatPaymentStatus(paymentStatus) {
+        const normalizedStatus =
+            String(paymentStatus || "")
+                .trim()
+                .toLowerCase();
+
+        if (!normalizedStatus) {
+            return "Unknown payment";
+        }
+
+        return (
+            normalizedStatus.charAt(0).toUpperCase() +
+            normalizedStatus.slice(1)
+        );
+    }
+
+
+    function getPaymentBadgeClass(paymentStatus) {
+        const normalizedStatus =
+            String(paymentStatus || "")
+                .trim()
+                .toLowerCase();
+
+        const supportedStatuses = [
+            "paid",
+            "pending",
+            "unpaid",
+            "failed",
+            "cancelled",
+            "refunded"
+        ];
+
+        return supportedStatuses.includes(
+            normalizedStatus
+        )
+            ? `payment-${normalizedStatus}`
+            : "payment-unpaid";
     }
 
 
@@ -2122,15 +2161,12 @@
 
     function createDetailItem(
         label,
-        value,
-        highlight = false
+        value
     ) {
         const item =
             document.createElement("div");
 
-        item.className = highlight
-            ? "detail-item price-highlight"
-            : "detail-item";
+        item.className = "detail-item";
 
         const labelElement =
             document.createElement("span");
@@ -2545,43 +2581,37 @@
 
         details.appendChild(
             createDetailItem(
-                "Price per golfer",
-                formatCurrency(
-                    booking.price_per_player
+                "Payment",
+                formatPaymentMethod(
+                    booking.payment_method
                 )
             )
         );
 
         details.appendChild(
             createDetailItem(
-                `Per golfer after demo tax (${formatTaxRate()})`,
+                "Subtotal",
                 formatCurrency(
-                    calculateTaxedAmount(
-                        booking.price_per_player
-                    )
-                ),
-                true
-            )
-        );
-
-        details.appendChild(
-            createDetailItem(
-                "Group subtotal",
-                formatCurrency(
-                    booking.estimated_total
+                    booking.estimated_total,
+                    booking.checkout_currency ||
+                        booking.paid_currency
                 )
             )
         );
 
         details.appendChild(
             createDetailItem(
-                `Estimated total after demo tax (${formatTaxRate()})`,
+                booking.payment_status === "paid"
+                    ? "Amount paid"
+                    : "Checkout total",
                 formatCurrency(
-                    calculateTaxedAmount(
-                        booking.estimated_total
-                    )
-                ),
-                true
+                    booking.payment_status === "paid"
+                        ? booking.paid_amount
+                        : booking.checkout_total,
+                    booking.payment_status === "paid"
+                        ? booking.paid_currency
+                        : booking.checkout_currency
+                )
             )
         );
 
@@ -2606,6 +2636,17 @@
             createBadge(
                 formatStatus(status),
                 `status-${status}`
+            )
+        );
+
+        badges.appendChild(
+            createBadge(
+                formatPaymentStatus(
+                    booking.payment_status
+                ),
+                getPaymentBadgeClass(
+                    booking.payment_status
+                )
             )
         );
 
@@ -2844,7 +2885,7 @@
                 await supabase
                     .from("bookings")
                     .select(
-                        "id, name, day, time, players, customer_phone, holes, price_per_player, estimated_total, status, created_at, viewed_at, course_id"
+                        "id, name, day, time, players, customer_phone, holes, payment_method, payment_status, estimated_total, checkout_total, checkout_currency, paid_amount, paid_currency, status, created_at, viewed_at, course_id"
                     )
                     .order(
                         "created_at",

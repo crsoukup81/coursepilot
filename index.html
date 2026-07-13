@@ -1850,8 +1850,10 @@
 <script type="module">
     import { supabase } from "./supabase.js";
 
-    const COURSE_ID =
-        "d82c7906-bf56-4103-b9af-a726f45ae36e";
+    const DEFAULT_COURSE_SLUG = "demo-course";
+
+    const COURSE_SLUG_PATTERN =
+        /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
     const PENDING_CHECKOUT_STORAGE_KEY =
         "coursepilot_pending_checkout";
@@ -1861,8 +1863,10 @@
 
     const BOOKING_CONFIRMATION_SECONDS = 5;
 
-    const CHECKOUT_TOKEN_PATTERN =
+    const UUID_PATTERN =
         /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+    const CHECKOUT_TOKEN_PATTERN = UUID_PATTERN;
 
     const bookingForm =
         document.getElementById("bookingForm");
@@ -1963,6 +1967,7 @@
     const bookingSection =
         document.getElementById("bookingSection");
 
+    let activeCourse = null;
     let courseSettings = null;
     let availableTeeTimes = [];
     let availabilityContext = null;
@@ -2451,7 +2456,7 @@
                 await supabase.rpc(
                     "get_available_tee_times",
                     {
-                        p_course_id: COURSE_ID,
+                        p_course_id: activeCourse.id,
                         p_tee_date: selectedDate,
                         p_players: selectedPlayers
                     }
@@ -2749,7 +2754,7 @@
     }
 
 
-    function isValidPendingCheckout(value) {
+    function hasValidPendingCheckoutCore(value) {
         if (!value || typeof value !== "object") {
             return false;
         }
@@ -2776,6 +2781,97 @@
     }
 
 
+    function readPendingCheckoutFromStorage() {
+        try {
+            return JSON.parse(
+                sessionStorage.getItem(
+                    PENDING_CHECKOUT_STORAGE_KEY
+                ) || "null"
+            );
+        } catch (storageError) {
+            console.warn(
+                "Checkout retry details could not be restored:",
+                storageError
+            );
+
+            return null;
+        }
+    }
+
+
+    function getRequestedCourseSlug() {
+        const pageUrl = new URL(window.location.href);
+        const requestedCourseSlug =
+            pageUrl.searchParams.get("course");
+
+        if (requestedCourseSlug !== null) {
+            const normalizedCourseSlug =
+                requestedCourseSlug.trim().toLowerCase();
+
+            if (
+                !COURSE_SLUG_PATTERN.test(
+                    normalizedCourseSlug
+                )
+            ) {
+                throw new Error("COURSE_LINK_INVALID");
+            }
+
+            return normalizedCourseSlug;
+        }
+
+        if (pageUrl.searchParams.has("checkout")) {
+            const storedCheckout =
+                readPendingCheckoutFromStorage();
+
+            const storedCourseSlug =
+                String(
+                    storedCheckout?.course_slug || ""
+                ).trim().toLowerCase();
+
+            if (
+                hasValidPendingCheckoutCore(storedCheckout) &&
+                COURSE_SLUG_PATTERN.test(storedCourseSlug)
+            ) {
+                return storedCourseSlug;
+            }
+        }
+
+        return DEFAULT_COURSE_SLUG;
+    }
+
+
+    function isValidPendingCheckout(value) {
+        if (
+            !hasValidPendingCheckoutCore(value) ||
+            !activeCourse
+        ) {
+            return false;
+        }
+
+        const courseId =
+            String(value.course_id || "").trim();
+
+        const courseSlug =
+            String(value.course_slug || "")
+                .trim()
+                .toLowerCase();
+
+        if (!courseId && !courseSlug) {
+            return (
+                activeCourse.slug ===
+                DEFAULT_COURSE_SLUG
+            );
+        }
+
+        return (
+            UUID_PATTERN.test(courseId) &&
+            COURSE_SLUG_PATTERN.test(courseSlug) &&
+            courseId === activeCourse.id &&
+            courseSlug === activeCourse.slug
+        );
+    }
+
+
     function savePendingCheckout(checkout) {
         pendingCheckout = checkout;
 
@@ -2794,23 +2890,12 @@
 
 
     function restorePendingCheckout() {
-        try {
-            const storedCheckout =
-                JSON.parse(
-                    sessionStorage.getItem(
-                        PENDING_CHECKOUT_STORAGE_KEY
-                    ) || "null"
-                );
+        const storedCheckout =
+            readPendingCheckoutFromStorage();
 
-            if (isValidPendingCheckout(storedCheckout)) {
-                pendingCheckout = storedCheckout;
-                return;
-            }
-        } catch (storageError) {
-            console.warn(
-                "Checkout retry details could not be restored:",
-                storageError
-            );
+        if (isValidPendingCheckout(storedCheckout)) {
+            pendingCheckout = storedCheckout;
+            return;
         }
 
         clearPendingCheckout();
@@ -2951,6 +3036,13 @@
             pageUrl.searchParams.delete("checkout");
             pageUrl.searchParams.delete("session_id");
 
+            if (activeCourse) {
+                pageUrl.searchParams.set(
+                    "course",
+                    activeCourse.slug
+                );
+            }
+
             window.history.replaceState(
                 {},
                 "",
@@ -2983,6 +3075,9 @@
 
 
     async function loadCourseSettings() {
+        activeCourse = null;
+        courseSettings = null;
+
         showBookingMessage(
             "Loading course settings..."
         );
@@ -2993,13 +3088,55 @@
         );
 
         try {
+            const requestedCourseSlug =
+                getRequestedCourseSlug();
+
+            const {
+                data: course,
+                error: courseError
+            } = await supabase
+                .from("courses")
+                .select("id, name, slug")
+                .eq("slug", requestedCourseSlug)
+                .maybeSingle();
+
+            if (courseError) {
+                throw courseError;
+            }
+
+            const resolvedCourseId =
+                String(course?.id || "").trim();
+
+            const resolvedCourseName =
+                String(course?.name || "").trim();
+
+            const resolvedCourseSlug =
+                String(course?.slug || "")
+                    .trim()
+                    .toLowerCase();
+
+            if (
+                !UUID_PATTERN.test(resolvedCourseId) ||
+                !resolvedCourseName ||
+                resolvedCourseSlug !==
+                    requestedCourseSlug
+            ) {
+                throw new Error("COURSE_NOT_FOUND");
+            }
+
+            activeCourse = {
+                id: resolvedCourseId,
+                name: resolvedCourseName,
+                slug: resolvedCourseSlug
+            };
+
             const { data, error } =
                 await supabase
                     .from("course_public_settings")
                     .select(
                         "timezone, booking_start_time, booking_end_time, tee_interval_minutes, max_players, price_9_holes, price_18_holes, sales_tax_rate, currency"
                     )
-                    .eq("course_id", COURSE_ID)
+                    .eq("course_id", activeCourse.id)
                     .single();
 
             if (error) {
@@ -3083,15 +3220,26 @@
                 error
             );
 
+            const courseLinkIsUnavailable =
+                error?.message === "COURSE_LINK_INVALID" ||
+                error?.message === "COURSE_NOT_FOUND";
+
+            activeCourse = null;
+            courseSettings = null;
+
             bookingFields.disabled = true;
 
             resetAvailability(
                 "Booking is temporarily unavailable",
-                "Course settings could not be loaded."
+                courseLinkIsUnavailable
+                    ? "This course booking link is unavailable."
+                    : "Course settings could not be loaded."
             );
 
             showBookingMessage(
-                "Booking is temporarily unavailable.",
+                courseLinkIsUnavailable
+                    ? "This course booking link is unavailable. Check the link or contact the course."
+                    : "Booking is temporarily unavailable.",
                 "error"
             );
         }
@@ -3147,7 +3295,7 @@
             return;
         }
 
-        if (!courseSettings) {
+        if (!activeCourse || !courseSettings) {
             showBookingMessage(
                 "Course settings are not available.",
                 "error"
@@ -3285,7 +3433,7 @@
                 await supabase.rpc(
                     "create_booking_reservation",
                     {
-                        p_course_id: COURSE_ID,
+                        p_course_id: activeCourse.id,
                         p_tee_date: selectedDate,
                         p_tee_time: selectedTeeTime,
                         p_players: players,
@@ -3445,7 +3593,7 @@
 
             const storedBooking = {
                 booking_id: reservation.booking_id,
-                course_id: COURSE_ID,
+                course_id: activeCourse.id,
                 name,
                 day: selectedDate,
                 time: selectedTeeTime,
@@ -3484,6 +3632,8 @@
                 const checkout = {
                     booking_id:
                         String(reservation.booking_id),
+                    course_id: activeCourse.id,
+                    course_slug: activeCourse.slug,
                     checkout_access_token:
                         checkoutAccessToken,
                     expires_at:

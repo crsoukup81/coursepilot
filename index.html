@@ -1597,8 +1597,8 @@
                                         <span class="payment-copy">
                                             <strong>Pay online</strong>
                                             <span>
-                                                Use secure hosted checkout once
-                                                the Stripe test connection is added.
+                                                Continue to secure Stripe-hosted
+                                                test checkout after reserving.
                                             </span>
                                         </span>
 
@@ -1616,9 +1616,9 @@
                                 id="paymentNote"
                                 class="payment-warning"
                             >
-                                Online payment is not active yet. Selecting it
-                                records the preference, but no card will be
-                                charged during this step.
+                                Online payment uses Stripe test mode and opens
+                                secure checkout when configured. No real card
+                                will be charged while testing.
                             </p>
                         </div>
                     </div>
@@ -1750,6 +1750,15 @@
     const COURSE_ID =
         "d82c7906-bf56-4103-b9af-a726f45ae36e";
 
+    const PENDING_CHECKOUT_STORAGE_KEY =
+        "coursepilot_pending_checkout";
+
+    const DEFAULT_SUBMIT_LABEL =
+        "Submit Tee-Time Request";
+
+    const CHECKOUT_TOKEN_PATTERN =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
     const bookingForm =
         document.getElementById("bookingForm");
 
@@ -1842,6 +1851,7 @@
     let availabilityContext = null;
     let availabilityRequestId = 0;
     let selectedTeeTime = null;
+    let pendingCheckout = null;
 
 
     function normalizeTimeValue(timeValue) {
@@ -2554,6 +2564,213 @@
     }
 
 
+    function isValidPendingCheckout(value) {
+        if (!value || typeof value !== "object") {
+            return false;
+        }
+
+        const bookingId =
+            String(value.booking_id || "").trim();
+
+        const checkoutAccessToken =
+            String(
+                value.checkout_access_token || ""
+            ).trim();
+
+        const expiresAt =
+            Date.parse(value.expires_at || "");
+
+        return (
+            /^[1-9]\d{0,18}$/.test(bookingId) &&
+            CHECKOUT_TOKEN_PATTERN.test(
+                checkoutAccessToken
+            ) &&
+            Number.isFinite(expiresAt) &&
+            expiresAt > Date.now()
+        );
+    }
+
+
+    function savePendingCheckout(checkout) {
+        pendingCheckout = checkout;
+
+        try {
+            sessionStorage.setItem(
+                PENDING_CHECKOUT_STORAGE_KEY,
+                JSON.stringify(checkout)
+            );
+        } catch (storageError) {
+            console.warn(
+                "Checkout retry details could not be stored:",
+                storageError
+            );
+        }
+    }
+
+
+    function restorePendingCheckout() {
+        try {
+            const storedCheckout =
+                JSON.parse(
+                    sessionStorage.getItem(
+                        PENDING_CHECKOUT_STORAGE_KEY
+                    ) || "null"
+                );
+
+            if (isValidPendingCheckout(storedCheckout)) {
+                pendingCheckout = storedCheckout;
+                return;
+            }
+        } catch (storageError) {
+            console.warn(
+                "Checkout retry details could not be restored:",
+                storageError
+            );
+        }
+
+        clearPendingCheckout();
+    }
+
+
+    function clearPendingCheckout() {
+        pendingCheckout = null;
+
+        try {
+            sessionStorage.removeItem(
+                PENDING_CHECKOUT_STORAGE_KEY
+            );
+        } catch (storageError) {
+            console.warn(
+                "Checkout retry details could not be cleared:",
+                storageError
+            );
+        }
+
+        submitButton.textContent =
+            DEFAULT_SUBMIT_LABEL;
+    }
+
+
+    function getStripeCheckoutUrl(value) {
+        try {
+            const checkoutUrl =
+                new URL(String(value || ""));
+
+            if (
+                checkoutUrl.protocol !== "https:" ||
+                checkoutUrl.hostname !==
+                    "checkout.stripe.com"
+            ) {
+                return null;
+            }
+
+            return checkoutUrl.href;
+        } catch {
+            return null;
+        }
+    }
+
+
+    async function startOnlineCheckout(checkout) {
+        showBookingMessage(
+            "Opening secure Stripe checkout..."
+        );
+
+        const { data, error } =
+            await supabase.functions.invoke(
+                "create-checkout-session",
+                {
+                    body: {
+                        booking_id:
+                            checkout.booking_id,
+                        checkout_access_token:
+                            checkout.checkout_access_token
+                    }
+                }
+            );
+
+        if (error) {
+            console.error(
+                "Online checkout could not be started:",
+                error.message
+            );
+
+            return false;
+        }
+
+        const checkoutUrl =
+            getStripeCheckoutUrl(
+                data?.checkout_url
+            );
+
+        if (!checkoutUrl) {
+            console.error(
+                "Online checkout returned an invalid redirect URL."
+            );
+
+            return false;
+        }
+
+        window.location.assign(checkoutUrl);
+        return true;
+    }
+
+
+    function showCheckoutRetryMessage(message) {
+        submitButton.textContent =
+            "Retry Secure Checkout";
+
+        showBookingMessage(
+            message,
+            "error"
+        );
+    }
+
+
+    function handleCheckoutReturn() {
+        restorePendingCheckout();
+
+        const pageUrl = new URL(window.location.href);
+        const checkoutState =
+            pageUrl.searchParams.get("checkout");
+
+        if (checkoutState === "success") {
+            clearPendingCheckout();
+
+            showBookingMessage(
+                "Your online payment was submitted. The course will receive the confirmed reservation after payment verification.",
+                "success"
+            );
+        } else if (checkoutState === "cancelled") {
+            if (pendingCheckout) {
+                showCheckoutRetryMessage(
+                    "Payment was cancelled. Your tee time is still held temporarily; use Retry Secure Checkout to continue without creating another reservation."
+                );
+            } else {
+                showBookingMessage(
+                    "Payment was cancelled and the temporary reservation hold is no longer available. Choose a tee time to start again.",
+                    "error"
+                );
+            }
+        } else if (pendingCheckout) {
+            showCheckoutRetryMessage(
+                "Your tee time is still held for online payment. Use Retry Secure Checkout to continue without creating another reservation."
+            );
+        }
+
+        if (checkoutState) {
+            pageUrl.searchParams.delete("checkout");
+            pageUrl.searchParams.delete("session_id");
+
+            window.history.replaceState(
+                {},
+                "",
+                pageUrl
+            );
+        }
+    }
+
+
     function isSelectedTimeValid(
         timeValue,
         selectedDate,
@@ -2696,6 +2913,48 @@
         event.preventDefault();
 
         if (submitButton.disabled) {
+            return;
+        }
+
+        if (pendingCheckout) {
+            if (!isValidPendingCheckout(pendingCheckout)) {
+                clearPendingCheckout();
+
+                showBookingMessage(
+                    "The temporary payment hold expired. Choose an available tee time to start again.",
+                    "error"
+                );
+
+                await loadAvailableTeeTimes();
+                return;
+            }
+
+            submitButton.disabled = true;
+
+            try {
+                const checkoutStarted =
+                    await startOnlineCheckout(
+                        pendingCheckout
+                    );
+
+                if (!checkoutStarted) {
+                    showCheckoutRetryMessage(
+                        "Your tee time is still held, but secure checkout could not open. Use Retry Secure Checkout to try again without creating another reservation."
+                    );
+                }
+            } catch (checkoutError) {
+                console.error(
+                    "Unexpected checkout retry error:",
+                    checkoutError
+                );
+
+                showCheckoutRetryMessage(
+                    "Your tee time is still held, but secure checkout could not open. Use Retry Secure Checkout to try again without creating another reservation."
+                );
+            } finally {
+                submitButton.disabled = false;
+            }
+
             return;
         }
 
@@ -2916,6 +3175,11 @@
                     reservation?.trusted_currency || ""
                 ).toLowerCase();
 
+            const checkoutAccessToken =
+                String(
+                    reservation?.checkout_access_token || ""
+                ).trim();
+
             const trustedPricingIsComplete =
                 [
                     reservation?.trusted_price_per_player,
@@ -2959,7 +3223,13 @@
                 trustedTaxAmount < 0 ||
                 !Number.isFinite(trustedTotal) ||
                 trustedTotal < 0 ||
-                !/^[a-z]{3}$/.test(trustedCurrency)
+                !/^[a-z]{3}$/.test(trustedCurrency) ||
+                (
+                    paymentMethod === "online" &&
+                    !CHECKOUT_TOKEN_PATTERN.test(
+                        checkoutAccessToken
+                    )
+                )
             ) {
                 console.error(
                     "Supabase booking response was incomplete."
@@ -3021,16 +3291,48 @@
                 );
             }
 
-            const paymentConfirmation =
-                paymentMethod === "online"
-                    ? (
-                        " Your tee time is held for online payment, " +
-                        "but no card has been charged yet."
-                    )
-                    : (
-                        " Your tee time is reserved and unpaid. " +
-                        "Payment will be due at the course."
+            if (paymentMethod === "online") {
+                const checkout = {
+                    booking_id:
+                        String(reservation.booking_id),
+                    checkout_access_token:
+                        checkoutAccessToken,
+                    expires_at:
+                        reservation.hold_expires_at
+                };
+
+                if (!isValidPendingCheckout(checkout)) {
+                    console.error(
+                        "Online reservation returned invalid checkout details."
                     );
+
+                    showBookingMessage(
+                        "Your tee time was held, but secure checkout details were incomplete. Please contact the course before trying again.",
+                        "error"
+                    );
+
+                    return;
+                }
+
+                savePendingCheckout(checkout);
+
+                const checkoutStarted =
+                    await startOnlineCheckout(checkout);
+
+                if (!checkoutStarted) {
+                    await loadAvailableTeeTimes();
+
+                    showCheckoutRetryMessage(
+                        "Your tee time is still held, but secure checkout could not open. Use Retry Secure Checkout to try again without creating another reservation."
+                    );
+                }
+
+                return;
+            }
+
+            const paymentConfirmation =
+                " Your tee time is reserved and unpaid. " +
+                "Payment will be due at the course.";
 
             await loadAvailableTeeTimes();
 
@@ -3066,10 +3368,16 @@
                 error
             );
 
-            showBookingMessage(
-                "An unexpected error occurred.",
-                "error"
-            );
+            if (pendingCheckout) {
+                showCheckoutRetryMessage(
+                    "Your tee time is still held, but secure checkout could not open. Use Retry Secure Checkout to try again without creating another reservation."
+                );
+            } else {
+                showBookingMessage(
+                    "An unexpected error occurred.",
+                    "error"
+                );
+            }
         } finally {
             submitButton.disabled = false;
         }
@@ -3140,7 +3448,7 @@
             message.includes("card")
         ) {
             assistantResponse.textContent =
-                "Choose Pay at the course or Pay online. Online checkout is not active during this step, so selecting it will not charge a card yet.";
+                "Choose Pay at the course or Pay online. Online payment continues in Stripe's secure hosted test checkout after your tee time is held.";
         } else if (
             message.includes("cart") ||
             message.includes("rental")
@@ -3237,7 +3545,13 @@
     );
 
 
-    loadCourseSettings();
+    async function initializeBookingPage() {
+        await loadCourseSettings();
+        handleCheckoutReturn();
+    }
+
+
+    initializeBookingPage();
 </script>
 
 </body>

@@ -2453,12 +2453,16 @@
 
         try {
             const { data, error } =
-                await supabase.rpc(
-                    "get_available_tee_times",
+                await supabase.functions.invoke(
+                    "booking-api",
                     {
-                        p_course_id: activeCourse.id,
-                        p_tee_date: selectedDate,
-                        p_players: selectedPlayers
+                        body: {
+                            operation:
+                                "search_availability",
+                            course_id: activeCourse.id,
+                            tee_date: selectedDate,
+                            players: selectedPlayers
+                        }
                     }
                 );
 
@@ -2473,12 +2477,18 @@
                 throw error;
             }
 
+            if (!Array.isArray(data?.tee_times)) {
+                throw new Error(
+                    "The availability response was invalid."
+                );
+            }
+
             availableTeeTimes =
-                (data || [])
+                data.tee_times
                     .map((slot) => {
                         const time =
                             normalizeTimeValue(
-                                slot.slot_time
+                                slot.time
                             );
 
                         const remainingPlayers =

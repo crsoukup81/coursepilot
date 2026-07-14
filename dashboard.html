@@ -913,6 +913,42 @@
             color: var(--text);
         }
 
+        .tee-slot-action {
+            margin-top: 7px;
+            padding: 5px 9px;
+            border: 1px solid var(--border-strong);
+            border-radius: 8px;
+            color: var(--green-800);
+            background: white;
+            font: inherit;
+            font-size: 10px;
+            font-weight: 900;
+            cursor: pointer;
+            transition:
+                border-color 0.16s ease,
+                background 0.16s ease,
+                transform 0.16s ease;
+        }
+
+        .tee-slot-action:hover:not(:disabled) {
+            border-color: var(--green-500);
+            background: var(--green-50);
+            transform: translateY(-1px);
+        }
+
+        .tee-slot-action.danger {
+            color: var(--red-700);
+            border-color: var(--red-200);
+            background: var(--red-50);
+        }
+
+        .tee-slot-action:disabled {
+            color: var(--muted);
+            background: var(--surface-soft);
+            cursor: not-allowed;
+            opacity: 0.72;
+        }
+
         .tee-slot-status {
             display: inline-flex;
             margin-top: 4px;
@@ -3723,6 +3759,48 @@
             capacityBlock.appendChild(capacityHeading);
             capacityBlock.appendChild(capacityCopy);
 
+            const statusAction = document.createElement("button");
+            statusAction.type = "button";
+            statusAction.className = "tee-slot-action";
+
+            if (slot.status === "blocked") {
+                statusAction.textContent = "Reopen time";
+                statusAction.setAttribute(
+                    "aria-label",
+                    `Reopen ${formatRequestedTime(slot.tee_time)}`
+                );
+                statusAction.addEventListener(
+                    "click",
+                    () => updateTeeTimeStatus(
+                        slot,
+                        "open",
+                        statusAction
+                    )
+                );
+            } else if (reserved > 0) {
+                statusAction.textContent = "Booking active";
+                statusAction.disabled = true;
+                statusAction.title =
+                    "Move or cancel active bookings before blocking this time.";
+            } else {
+                statusAction.textContent = "Block time";
+                statusAction.classList.add("danger");
+                statusAction.setAttribute(
+                    "aria-label",
+                    `Block ${formatRequestedTime(slot.tee_time)}`
+                );
+                statusAction.addEventListener(
+                    "click",
+                    () => updateTeeTimeStatus(
+                        slot,
+                        "blocked",
+                        statusAction
+                    )
+                );
+            }
+
+            capacityBlock.appendChild(statusAction);
+
             const slotBookings = getSlotBookings(slot);
             const bookingList = document.createElement("div");
             bookingList.className = "tee-slot-bookings";
@@ -3745,6 +3823,94 @@
             slotCard.appendChild(capacityBlock);
             slotCard.appendChild(bookingList);
             bookingArea.appendChild(slotCard);
+        }
+    }
+
+
+    async function updateTeeTimeStatus(
+        slot,
+        nextStatus,
+        button
+    ) {
+        const formattedTime = formatRequestedTime(slot.tee_time);
+
+        if (
+            nextStatus === "blocked" &&
+            button.dataset.confirming !== "true"
+        ) {
+            button.dataset.confirming = "true";
+            button.textContent = "Confirm block";
+            button.title =
+                "Click again to make this tee time unavailable.";
+
+            window.setTimeout(() => {
+                if (button.isConnected) {
+                    button.dataset.confirming = "false";
+                    button.textContent = "Block time";
+                    button.title = "";
+                }
+            }, 5000);
+            return;
+        }
+
+        button.disabled = true;
+        const originalLabel = button.textContent;
+        button.textContent =
+            nextStatus === "blocked" ? "Blocking..." : "Reopening...";
+
+        try {
+            let updateQuery = supabase
+                .from("tee_times")
+                .update({ status: nextStatus })
+                .eq("id", slot.id)
+                .eq("status", slot.status);
+
+            if (nextStatus === "blocked") {
+                updateQuery = updateQuery.eq(
+                    "reserved_players",
+                    0
+                );
+            }
+
+            const { data, error } = await updateQuery
+                .select("id, status, reserved_players")
+                .maybeSingle();
+
+            if (error) {
+                throw error;
+            }
+
+            if (!data) {
+                await loadTeeSheet();
+                showToast(
+                    nextStatus === "blocked"
+                        ? "This tee time changed or received a booking. It was not blocked."
+                        : "This tee time changed before it could be reopened.",
+                    "error"
+                );
+                return;
+            }
+
+            slot.status = data.status;
+            slot.reserved_players = data.reserved_players;
+            renderTeeSheet();
+            showToast(
+                nextStatus === "blocked"
+                    ? `${formattedTime} is now blocked.`
+                    : `${formattedTime} is open for booking.`
+            );
+        } catch (error) {
+            console.error("Tee-time status update failed:", error);
+            button.disabled = false;
+            button.dataset.confirming = "false";
+            button.textContent =
+                nextStatus === "blocked"
+                    ? "Block time"
+                    : originalLabel;
+            showToast(
+                "The tee time could not be updated. Please try again.",
+                "error"
+            );
         }
     }
 

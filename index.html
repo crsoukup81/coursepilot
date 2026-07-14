@@ -833,6 +833,55 @@
             color: var(--muted);
         }
 
+        .availability-filter-bar {
+            margin-bottom: 13px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            overflow-x: auto;
+        }
+
+        .availability-filter-label {
+            margin-right: 2px;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .time-filter-button {
+            min-height: 31px;
+            padding: 6px 10px;
+            flex: 0 0 auto;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 900;
+            color: var(--green-900);
+            background: white;
+            cursor: pointer;
+            transition:
+                color 0.16s ease,
+                border-color 0.16s ease,
+                background 0.16s ease;
+        }
+
+        .time-filter-button:hover,
+        .time-filter-button.active {
+            color: white;
+            border-color: var(--green-700);
+            background: var(--green-700);
+        }
+
+        .tee-time-match-count {
+            margin-left: auto;
+            flex: 0 0 auto;
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--muted);
+        }
+
         .tee-time-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -850,17 +899,17 @@
         }
 
         .tee-time-option label {
-            min-height: 78px;
+            min-height: 92px;
             margin: 0;
-            padding: 13px 9px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: stretch;
             justify-content: center;
-            gap: 5px;
+            gap: 7px;
             border: 1px solid var(--border);
             border-radius: 13px;
-            text-align: center;
+            text-align: left;
             background: white;
             cursor: pointer;
             transition:
@@ -877,16 +926,45 @@
         }
 
         .tee-time-value {
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 900;
             color: var(--green-950);
         }
 
+        .tee-time-card-top,
+        .tee-time-card-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .tee-time-tag {
+            padding: 3px 6px;
+            border-radius: 999px;
+            font-size: 8px;
+            font-weight: 900;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--green-700);
+            background: var(--green-100);
+        }
+
         .tee-time-capacity {
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 800;
             letter-spacing: 0.02em;
             color: var(--muted);
+        }
+
+        .tee-time-capacity.low {
+            color: #9a5c00;
+        }
+
+        .tee-time-price {
+            font-size: 10px;
+            font-weight: 900;
+            color: var(--green-700);
         }
 
         .tee-time-option input:checked + label {
@@ -902,8 +980,14 @@
         }
 
         .tee-time-option input:checked + label .tee-time-value,
-        .tee-time-option input:checked + label .tee-time-capacity {
+        .tee-time-option input:checked + label .tee-time-capacity,
+        .tee-time-option input:checked + label .tee-time-price {
             color: white;
+        }
+
+        .tee-time-option input:checked + label .tee-time-tag {
+            color: var(--green-900);
+            background: white;
         }
 
         .availability-state {
@@ -1577,6 +1661,53 @@
                                 </div>
 
                                 <div
+                                    id="availabilityFilters"
+                                    class="availability-filter-bar"
+                                    hidden
+                                >
+                                    <span class="availability-filter-label">
+                                        Time of day
+                                    </span>
+
+                                    <button
+                                        class="time-filter-button active"
+                                        type="button"
+                                        data-time-filter="all"
+                                    >
+                                        All
+                                    </button>
+
+                                    <button
+                                        class="time-filter-button"
+                                        type="button"
+                                        data-time-filter="morning"
+                                    >
+                                        Morning
+                                    </button>
+
+                                    <button
+                                        class="time-filter-button"
+                                        type="button"
+                                        data-time-filter="afternoon"
+                                    >
+                                        Afternoon
+                                    </button>
+
+                                    <button
+                                        class="time-filter-button"
+                                        type="button"
+                                        data-time-filter="evening"
+                                    >
+                                        Evening
+                                    </button>
+
+                                    <span
+                                        id="teeTimeMatchCount"
+                                        class="tee-time-match-count"
+                                    ></span>
+                                </div>
+
+                                <div
                                     id="teeTimeArea"
                                     class="tee-time-grid"
                                 ></div>
@@ -1865,6 +1996,12 @@
     const DEFAULT_SUBMIT_LABEL =
         "Submit Tee-Time Request";
 
+    const ONLINE_SUBMIT_LABEL =
+        "Continue to Stripe Checkout";
+
+    const RETRY_CHECKOUT_LABEL =
+        "Retry Secure Checkout";
+
     const BOOKING_CONFIRMATION_SECONDS = 5;
 
     const UUID_PATTERN =
@@ -1919,6 +2056,12 @@
 
     const availabilityNote =
         document.getElementById("availabilityNote");
+
+    const availabilityFilters =
+        document.getElementById("availabilityFilters");
+
+    const teeTimeMatchCount =
+        document.getElementById("teeTimeMatchCount");
 
     const summaryDate =
         document.getElementById("summaryDate");
@@ -1977,6 +2120,7 @@
     let availabilityContext = null;
     let availabilityRequestId = 0;
     let selectedTeeTime = null;
+    let teeTimePeriodFilter = "all";
     let pendingCheckout = null;
     let bookingConfirmationTimerId = null;
 
@@ -2369,15 +2513,86 @@
         selectedTeeTime = null;
         availableTeeTimes = [];
         availabilityContext = null;
+        teeTimePeriodFilter = "all";
+        availabilityFilters.hidden = true;
+        teeTimeMatchCount.textContent = "";
+        updateTimeFilterButtons();
 
         showAvailabilityState(heading, description);
+    }
+
+
+    function getTeeTimePeriod(timeValue) {
+        const normalizedTime = normalizeTimeValue(timeValue);
+
+        if (!normalizedTime) {
+            return "morning";
+        }
+
+        const hour = Number(normalizedTime.slice(0, 2));
+
+        if (hour < 12) {
+            return "morning";
+        }
+
+        if (hour < 16) {
+            return "afternoon";
+        }
+
+        return "evening";
+    }
+
+
+    function updateTimeFilterButtons() {
+        availabilityFilters
+            .querySelectorAll("[data-time-filter]")
+            .forEach((button) => {
+                button.classList.toggle(
+                    "active",
+                    button.dataset.timeFilter ===
+                        teeTimePeriodFilter
+                );
+            });
+    }
+
+
+    function getVisibleCustomerTeeTimes() {
+        if (teeTimePeriodFilter === "all") {
+            return availableTeeTimes;
+        }
+
+        return availableTeeTimes.filter(
+            (slot) =>
+                getTeeTimePeriod(slot.time) ===
+                    teeTimePeriodFilter
+        );
     }
 
 
     function createTeeTimeCards() {
         teeTimeArea.replaceChildren();
 
-        for (const slot of availableTeeTimes) {
+        const visibleTeeTimes =
+            getVisibleCustomerTeeTimes();
+
+        availabilityFilters.hidden = false;
+        teeTimeMatchCount.textContent =
+            `${visibleTeeTimes.length} ` +
+            `${visibleTeeTimes.length === 1 ? "time" : "times"}`;
+
+        if (visibleTeeTimes.length === 0) {
+            showAvailabilityState(
+                "No times in this period",
+                "Choose another time-of-day filter."
+            );
+            return;
+        }
+
+        const holes = getSelectedHoleCount();
+        const perPlayerPricing =
+            getPricingBreakdown(1, holes);
+
+        for (const slot of visibleTeeTimes) {
             const wrapper = document.createElement("div");
             wrapper.className = "tee-time-option";
 
@@ -2386,13 +2601,29 @@
             input.name = "teeTime";
             input.id = `teeTime${slot.time.replace(":", "")}`;
             input.value = slot.time;
+            input.checked = selectedTeeTime === slot.time;
 
             const label = document.createElement("label");
             label.htmlFor = input.id;
 
+            const top = document.createElement("span");
+            top.className = "tee-time-card-top";
+
             const time = document.createElement("span");
             time.className = "tee-time-value";
             time.textContent = formatTimeForDisplay(slot.time);
+
+            top.appendChild(time);
+
+            if (slot === availableTeeTimes[0]) {
+                const tag = document.createElement("span");
+                tag.className = "tee-time-tag";
+                tag.textContent = "Earliest";
+                top.appendChild(tag);
+            }
+
+            const meta = document.createElement("span");
+            meta.className = "tee-time-card-meta";
 
             const capacity = document.createElement("span");
             capacity.className = "tee-time-capacity";
@@ -2404,10 +2635,26 @@
                 );
 
             capacity.textContent =
-                `1–${maximumDisplayedPlayers} players`;
+                slot.remainingPlayers <= 2
+                    ? `Only ${slot.remainingPlayers} left`
+                    : `${slot.remainingPlayers} spots left`;
 
-            label.appendChild(time);
-            label.appendChild(capacity);
+            if (slot.remainingPlayers <= 2) {
+                capacity.classList.add("low");
+            }
+
+            const price = document.createElement("span");
+            price.className = "tee-time-price";
+            price.textContent = perPlayerPricing
+                ? `${formatCurrency(
+                    perPlayerPricing.totalAfterTax
+                )} / golfer`
+                : `${maximumDisplayedPlayers} max`;
+
+            meta.appendChild(capacity);
+            meta.appendChild(price);
+            label.appendChild(top);
+            label.appendChild(meta);
 
             input.addEventListener(
                 "change",
@@ -2647,6 +2894,8 @@
             formatPaymentMethod(
                 paymentMethod
             );
+
+        updateSubmitButtonLabel(paymentMethod);
 
         const pricing =
             getPricingBreakdown(
@@ -2947,8 +3196,23 @@
             );
         }
 
+        updateSubmitButtonLabel();
+    }
+
+
+    function updateSubmitButtonLabel(
+        paymentMethod = getSelectedPaymentMethod()
+    ) {
+        if (pendingCheckout) {
+            submitButton.textContent =
+                RETRY_CHECKOUT_LABEL;
+            return;
+        }
+
         submitButton.textContent =
-            DEFAULT_SUBMIT_LABEL;
+            paymentMethod === "online"
+                ? ONLINE_SUBMIT_LABEL
+                : DEFAULT_SUBMIT_LABEL;
     }
 
 
@@ -3019,7 +3283,7 @@
 
     function showCheckoutRetryMessage(message) {
         submitButton.textContent =
-            "Retry Secure Checkout";
+            RETRY_CHECKOUT_LABEL;
 
         showBookingMessage(
             message,
@@ -3897,13 +4161,49 @@
 
     holeOptions.addEventListener(
         "change",
-        updateBookingSummary
+        () => {
+            updateBookingSummary();
+
+            if (availableTeeTimes.length > 0) {
+                createTeeTimeCards();
+            }
+        }
     );
 
 
     paymentOptions.addEventListener(
         "change",
         updateBookingSummary
+    );
+
+
+    availabilityFilters.addEventListener(
+        "click",
+        (event) => {
+            const button = event.target.closest(
+                "[data-time-filter]"
+            );
+
+            if (!button) {
+                return;
+            }
+
+            teeTimePeriodFilter =
+                button.dataset.timeFilter;
+
+            if (
+                selectedTeeTime &&
+                teeTimePeriodFilter !== "all" &&
+                getTeeTimePeriod(selectedTeeTime) !==
+                    teeTimePeriodFilter
+            ) {
+                selectedTeeTime = null;
+                updateBookingSummary();
+            }
+
+            updateTimeFilterButtons();
+            createTeeTimeCards();
+        }
     );
 
 

@@ -17,10 +17,12 @@
             --green-700: #176b49;
             --green-600: #1f855a;
             --green-500: #2ea36e;
+            --green-300: #8fd5ad;
             --green-100: #dff4e8;
             --green-50: #f0faf4;
 
             --blue-700: #1d4ed8;
+            --blue-500: #3b82f6;
             --blue-100: #dbeafe;
             --blue-50: #eff6ff;
 
@@ -29,6 +31,7 @@
             --amber-50: #fffbeb;
 
             --red-700: #b42318;
+            --red-500: #ef4444;
             --red-100: #fee4e2;
             --red-50: #fff1f0;
 
@@ -689,6 +692,11 @@
             display: flex;
             gap: 4px;
             overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .tabs::-webkit-scrollbar {
+            display: none;
         }
 
         .tab-button {
@@ -743,6 +751,241 @@
             padding: 20px;
             display: grid;
             gap: 16px;
+        }
+
+        .booking-list.tee-sheet-mode {
+            padding: 14px;
+            gap: 8px;
+            background: #f7faf8;
+        }
+
+        .tabs-meta {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .tee-sheet-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tee-sheet-controls label {
+            font-size: 12px;
+            font-weight: 900;
+            color: var(--green-900);
+        }
+
+        .tee-sheet-controls input {
+            min-height: 34px;
+            padding: 5px 8px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            color: var(--text);
+            background: white;
+        }
+
+        .tee-sheet-date-button,
+        .tee-sheet-filter {
+            min-height: 34px;
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            font-size: 11px;
+            font-weight: 900;
+            color: var(--green-900);
+            background: white;
+            cursor: pointer;
+            transition:
+                border-color 0.16s ease,
+                color 0.16s ease,
+                background 0.16s ease;
+        }
+
+        .tee-sheet-date-button:hover,
+        .tee-sheet-filter:hover,
+        .tee-sheet-filter.active {
+            color: white;
+            border-color: var(--green-700);
+            background: var(--green-700);
+        }
+
+        .tee-sheet-date-button.icon {
+            width: 34px;
+            padding: 0;
+            font-size: 16px;
+        }
+
+        .tee-sheet-filter-bar {
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            overflow-x: auto;
+            border-bottom: 1px solid var(--border);
+            background: #fbfdfc;
+        }
+
+        .tee-sheet-filter-label {
+            margin-right: 4px;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .tee-sheet-summary {
+            display: grid;
+            grid-template-columns:
+                repeat(6, minmax(0, 1fr));
+            gap: 7px;
+        }
+
+        .tee-sheet-metric {
+            padding: 9px 11px;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            background: white;
+        }
+
+        .tee-sheet-metric span {
+            display: block;
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .tee-sheet-metric strong {
+            display: block;
+            margin-top: 3px;
+            font-size: 17px;
+            color: var(--green-950);
+        }
+
+        .tee-slot {
+            min-height: 62px;
+            padding: 8px 10px;
+            display: grid;
+            grid-template-columns:
+                92px
+                minmax(145px, 0.65fr)
+                minmax(260px, 2fr);
+            gap: 10px;
+            align-items: center;
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--green-300);
+            border-radius: 11px;
+            background: white;
+            box-shadow: 0 3px 12px rgba(9, 51, 35, 0.035);
+        }
+
+        .tee-slot[data-state="booked"] {
+            border-left-color: var(--blue-500);
+        }
+
+        .tee-slot[data-state="full"],
+        .tee-slot[data-state="blocked"] {
+            border-left-color: var(--red-500);
+        }
+
+        .tee-slot-time strong {
+            display: block;
+            font-size: 16px;
+            color: var(--green-950);
+        }
+
+        .tee-slot-time span,
+        .tee-slot-capacity span {
+            display: block;
+            margin-top: 2px;
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        .tee-slot-capacity strong {
+            display: block;
+            font-size: 12px;
+            color: var(--text);
+        }
+
+        .tee-slot-status {
+            display: inline-flex;
+            margin-top: 4px;
+            padding: 3px 7px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .tee-slot-status.open {
+            color: var(--green-700);
+            background: var(--green-100);
+        }
+
+        .tee-slot-status.booked {
+            color: var(--blue-700);
+            background: var(--blue-100);
+        }
+
+        .tee-slot-status.full,
+        .tee-slot-status.blocked {
+            color: var(--red-700);
+            background: var(--red-100);
+        }
+
+        .tee-slot-bookings {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tee-slot-empty {
+            padding: 6px 9px;
+            font-size: 11px;
+            color: var(--muted);
+            border-radius: 8px;
+            background: #f5f9f6;
+        }
+
+        .tee-sheet-booking-row {
+            min-width: 230px;
+            flex: 1 1 260px;
+            padding: 7px 9px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            background: var(--surface-soft);
+        }
+
+        .tee-sheet-booking-row strong,
+        .tee-sheet-booking-row span {
+            display: block;
+        }
+
+        .tee-sheet-booking-row strong {
+            font-size: 11px;
+            color: var(--green-950);
+        }
+
+        .tee-sheet-booking-row span {
+            margin-top: 2px;
+            font-size: 9px;
+            color: var(--muted);
+        }
+
+        .tee-sheet-payment {
+            flex: 0 0 auto;
+            text-align: right;
         }
 
         .booking-card {
@@ -1137,6 +1380,16 @@
                 width: 100%;
             }
 
+            .tabs-meta {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .tee-sheet-summary {
+                grid-template-columns:
+                    repeat(3, minmax(0, 1fr));
+            }
+
             .booking-card-main {
                 grid-template-columns: 1fr;
             }
@@ -1199,6 +1452,33 @@
 
             .booking-list {
                 padding: 14px;
+            }
+
+            .tee-sheet-controls {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .tee-sheet-controls input {
+                flex: 1 1 145px;
+            }
+
+            .tee-sheet-summary {
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+            }
+
+            .tee-slot {
+                grid-template-columns:
+                    86px minmax(0, 1fr);
+            }
+
+            .tee-slot-bookings {
+                grid-column: 1 / -1;
+            }
+
+            .tee-sheet-booking-row {
+                min-width: 0;
             }
 
             .booking-card-main,
@@ -1550,9 +1830,9 @@
             <div class="panel-toolbar">
 
                 <div class="panel-heading">
-                    <h2>Request activity</h2>
+                    <h2 id="panelHeadingTitle">Request activity</h2>
 
-                    <p>
+                    <p id="panelHeadingDescription">
                         Search all requests or filter by workflow state.
                     </p>
                 </div>
@@ -1577,6 +1857,14 @@
                     class="tabs"
                     aria-label="Booking filters"
                 >
+
+                    <button
+                        class="tab-button"
+                        type="button"
+                        data-filter="tee_sheet"
+                    >
+                        Tee Sheet
+                    </button>
 
                     <button
                         class="tab-button active"
@@ -1678,13 +1966,103 @@
 
                 </nav>
 
-                <span
-                    id="resultsCount"
-                    class="results-count"
-                >
-                    0 requests
-                </span>
+                <div class="tabs-meta">
+                    <div
+                        id="teeSheetControls"
+                        class="tee-sheet-controls"
+                        hidden
+                    >
+                        <button
+                            id="previousTeeSheetDate"
+                            class="tee-sheet-date-button icon"
+                            type="button"
+                            aria-label="Previous day"
+                            title="Previous day"
+                        >
+                            &lsaquo;
+                        </button>
 
+                        <button
+                            id="todayTeeSheetDate"
+                            class="tee-sheet-date-button"
+                            type="button"
+                        >
+                            Today
+                        </button>
+
+                        <label for="teeSheetDate">Date</label>
+                        <input
+                            id="teeSheetDate"
+                            type="date"
+                        >
+
+                        <button
+                            id="nextTeeSheetDate"
+                            class="tee-sheet-date-button icon"
+                            type="button"
+                            aria-label="Next day"
+                            title="Next day"
+                        >
+                            &rsaquo;
+                        </button>
+                    </div>
+
+                    <span
+                        id="resultsCount"
+                        class="results-count"
+                    >
+                        0 requests
+                    </span>
+                </div>
+
+            </div>
+
+            <div
+                id="teeSheetFilterBar"
+                class="tee-sheet-filter-bar"
+                hidden
+            >
+                <span class="tee-sheet-filter-label">Show</span>
+
+                <button
+                    class="tee-sheet-filter active"
+                    type="button"
+                    data-tee-sheet-filter="all"
+                >
+                    All times
+                </button>
+
+                <button
+                    class="tee-sheet-filter"
+                    type="button"
+                    data-tee-sheet-filter="open"
+                >
+                    Open
+                </button>
+
+                <button
+                    class="tee-sheet-filter"
+                    type="button"
+                    data-tee-sheet-filter="booked"
+                >
+                    Booked
+                </button>
+
+                <button
+                    class="tee-sheet-filter"
+                    type="button"
+                    data-tee-sheet-filter="full"
+                >
+                    Full
+                </button>
+
+                <button
+                    class="tee-sheet-filter"
+                    type="button"
+                    data-tee-sheet-filter="blocked"
+                >
+                    Blocked
+                </button>
             </div>
 
             <div
@@ -1770,6 +2148,17 @@
     const searchInput =
         document.getElementById("searchInput");
 
+    const searchWrapper =
+        searchInput.closest(".search-wrapper");
+
+    const panelHeadingTitle =
+        document.getElementById("panelHeadingTitle");
+
+    const panelHeadingDescription =
+        document.getElementById(
+            "panelHeadingDescription"
+        );
+
     const tabs =
         document.getElementById("tabs");
 
@@ -1778,6 +2167,24 @@
 
     const resultsCount =
         document.getElementById("resultsCount");
+
+    const teeSheetControls =
+        document.getElementById("teeSheetControls");
+
+    const teeSheetDate =
+        document.getElementById("teeSheetDate");
+
+    const previousTeeSheetDate =
+        document.getElementById("previousTeeSheetDate");
+
+    const todayTeeSheetDate =
+        document.getElementById("todayTeeSheetDate");
+
+    const nextTeeSheetDate =
+        document.getElementById("nextTeeSheetDate");
+
+    const teeSheetFilterBar =
+        document.getElementById("teeSheetFilterBar");
 
     const newStat =
         document.getElementById("newStat");
@@ -1816,7 +2223,10 @@
         document.getElementById("toast");
 
     let bookings = [];
+    let teeTimes = [];
+    let courseSettingsById = new Map();
     let activeFilter = "new";
+    let teeSheetFilter = "all";
     let toastTimeoutId = null;
 
     const passwordRecoveryRequested =
@@ -1873,6 +2283,24 @@
         recoveryForm.reset();
         managerEmail.textContent = "";
         bookings = [];
+        teeTimes = [];
+        courseSettingsById = new Map();
+        activeFilter = "new";
+        teeSheetFilter = "all";
+        searchInput.value = "";
+        teeSheetDate.value = "";
+
+        document
+            .querySelectorAll(".tab-button")
+            .forEach((tab) => {
+                tab.classList.toggle(
+                    "active",
+                    tab.dataset.filter === activeFilter
+                );
+            });
+
+        updateTeeSheetFilterButtons();
+        updateManagerViewControls();
 
         loginMessage.className = messageType
             ? `message ${messageType}`
@@ -1921,7 +2349,35 @@
         managerEmail.textContent =
             email || "Signed-in manager";
 
+        if (!teeSheetDate.value) {
+            teeSheetDate.value = getTodayDateValue();
+        }
+
         await loadBookings();
+    }
+
+
+    function updateManagerViewControls() {
+        const teeSheetIsActive =
+            activeFilter === "tee_sheet";
+
+        searchWrapper.hidden = teeSheetIsActive;
+        teeSheetControls.hidden = !teeSheetIsActive;
+        teeSheetFilterBar.hidden = !teeSheetIsActive;
+        bookingArea.classList.toggle(
+            "tee-sheet-mode",
+            teeSheetIsActive
+        );
+
+        panelHeadingTitle.textContent =
+            teeSheetIsActive
+                ? "Daily tee sheet"
+                : "Request activity";
+
+        panelHeadingDescription.textContent =
+            teeSheetIsActive
+                ? "Review availability, golfer counts, and payment status for each tee time."
+                : "Search all requests or filter by workflow state.";
     }
 
 
@@ -2054,6 +2510,170 @@
                 currency: currencyCode
             }
         ).format(amount);
+    }
+
+
+    function getTodayDateValue() {
+        const now = new Date();
+        const localDate = new Date(
+            now.getTime() -
+            now.getTimezoneOffset() * 60_000
+        );
+
+        return localDate.toISOString().slice(0, 10);
+    }
+
+
+    function shiftDateValue(dateValue, dayOffset) {
+        const parts = String(dateValue || "")
+            .split("-")
+            .map(Number);
+
+        if (
+            parts.length !== 3 ||
+            parts.some((part) => !Number.isInteger(part))
+        ) {
+            return getTodayDateValue();
+        }
+
+        const date = new Date(
+            parts[0],
+            parts[1] - 1,
+            parts[2]
+        );
+
+        date.setDate(date.getDate() + dayOffset);
+
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1)
+            .padStart(2, "0");
+        const day = String(date.getDate())
+            .padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+    }
+
+
+    function normalizeTeeTime(timeValue) {
+        const match =
+            /^(\d{1,2}):(\d{2})/.exec(
+                String(timeValue || "")
+            );
+
+        if (!match) {
+            return "";
+        }
+
+        return `${match[1].padStart(2, "0")}:${match[2]}`;
+    }
+
+
+    function isActiveTeeSheetBooking(booking) {
+        const status = normalizeStatus(booking.status);
+        const reservationStatus =
+            String(booking.reservation_status || "")
+                .trim()
+                .toLowerCase();
+
+        return (
+            status !== "declined" &&
+            status !== "cancelled" &&
+            reservationStatus !== "released" &&
+            reservationStatus !== "cancelled"
+        );
+    }
+
+
+    function getSlotBookings(slot) {
+        const slotTime =
+            normalizeTeeTime(slot.tee_time);
+
+        return bookings.filter(
+            (booking) =>
+                booking.course_id === slot.course_id &&
+                booking.day === slot.tee_date &&
+                normalizeTeeTime(booking.time) ===
+                    slotTime &&
+                isActiveTeeSheetBooking(booking)
+        );
+    }
+
+
+    function getBookingPaymentSummary(booking) {
+        const settings =
+            courseSettingsById.get(booking.course_id);
+
+        const currency =
+            booking.paid_currency ||
+            booking.checkout_currency ||
+            settings?.currency ||
+            "usd";
+
+        if (booking.payment_status === "paid") {
+            const amount = Number(booking.paid_amount);
+
+            return {
+                label: "Paid online",
+                amount: formatCurrency(
+                    booking.paid_amount,
+                    currency
+                ),
+                amountValue:
+                    Number.isFinite(amount)
+                        ? amount
+                        : 0,
+                currency
+            };
+        }
+
+        if (booking.payment_method === "pay_at_course") {
+            const subtotal =
+                Number(booking.estimated_total);
+
+            const taxRate =
+                Number(settings?.sales_tax_rate);
+
+            const totalDue =
+                Number.isFinite(subtotal) &&
+                Number.isFinite(taxRate)
+                    ? Number(
+                        (
+                            subtotal * (1 + taxRate)
+                        ).toFixed(2)
+                    )
+                    : booking.estimated_total;
+
+            return {
+                label: "Pay at course",
+                amount: `${formatCurrency(
+                    totalDue,
+                    currency
+                )} due`,
+                amountValue:
+                    Number.isFinite(Number(totalDue))
+                        ? Number(totalDue)
+                        : 0,
+                currency
+            };
+        }
+
+        const checkoutAmount =
+            Number(booking.checkout_total);
+
+        return {
+            label: `Stripe ${formatPaymentStatus(
+                booking.payment_status
+            ).toLowerCase()}`,
+            amount: formatCurrency(
+                booking.checkout_total,
+                currency
+            ),
+            amountValue:
+                Number.isFinite(checkoutAmount)
+                    ? checkoutAmount
+                    : 0,
+            currency
+        };
     }
 
 
@@ -2767,6 +3387,378 @@
     }
 
 
+    function createTeeSheetMetric(label, value) {
+        const metric = document.createElement("div");
+        metric.className = "tee-sheet-metric";
+
+        const metricLabel = document.createElement("span");
+        metricLabel.textContent = label;
+
+        const metricValue = document.createElement("strong");
+        metricValue.textContent = String(value);
+
+        metric.appendChild(metricLabel);
+        metric.appendChild(metricValue);
+
+        return metric;
+    }
+
+
+    function getTeeSlotState(slot) {
+        const capacity = Number(slot.capacity) || 0;
+        const reservedPlayers =
+            Number(slot.reserved_players) || 0;
+
+        if (slot.status === "blocked") {
+            return {
+                key: "blocked",
+                label: "Blocked"
+            };
+        }
+
+        if (reservedPlayers >= capacity) {
+            return {
+                key: "full",
+                label: "Full"
+            };
+        }
+
+        if (reservedPlayers > 0) {
+            return {
+                key: "booked",
+                label: "Partially booked"
+            };
+        }
+
+        return {
+            key: "open",
+            label: "Open"
+        };
+    }
+
+
+    function updateTeeSheetFilterButtons() {
+        teeSheetFilterBar
+            .querySelectorAll("[data-tee-sheet-filter]")
+            .forEach((button) => {
+                button.classList.toggle(
+                    "active",
+                    button.dataset.teeSheetFilter ===
+                        teeSheetFilter
+                );
+            });
+    }
+
+
+    function getVisibleTeeTimes() {
+        if (teeSheetFilter === "all") {
+            return teeTimes;
+        }
+
+        return teeTimes.filter(
+            (slot) =>
+                getTeeSlotState(slot).key ===
+                    teeSheetFilter
+        );
+    }
+
+
+    function createTeeSheetBookingRow(booking) {
+        const row = document.createElement("div");
+        row.className = "tee-sheet-booking-row";
+
+        const customer = document.createElement("div");
+        const customerName = document.createElement("strong");
+        const bookingDetails = document.createElement("span");
+
+        const playerCount = Number(booking.players) || 0;
+        customerName.textContent = booking.name || "Guest";
+        bookingDetails.textContent =
+            `${playerCount} golfer${playerCount === 1 ? "" : "s"}` +
+            ` • ${formatRoundLength(booking.holes)}` +
+            ` • ${formatStatus(booking.status)}`;
+
+        customer.appendChild(customerName);
+        customer.appendChild(bookingDetails);
+
+        const payment = document.createElement("div");
+        payment.className = "tee-sheet-payment";
+
+        const paymentSummary =
+            getBookingPaymentSummary(booking);
+
+        const paymentLabel = document.createElement("strong");
+        const paymentAmount = document.createElement("span");
+
+        paymentLabel.textContent = paymentSummary.label;
+        paymentAmount.textContent = paymentSummary.amount;
+
+        payment.appendChild(paymentLabel);
+        payment.appendChild(paymentAmount);
+
+        row.appendChild(customer);
+        row.appendChild(payment);
+
+        return row;
+    }
+
+
+    function renderTeeSheet() {
+        bookingArea.replaceChildren();
+
+        const activeBookings = bookings.filter(
+            (booking) =>
+                booking.day === teeSheetDate.value &&
+                isActiveTeeSheetBooking(booking)
+        );
+
+        const availableSlots = teeTimes.filter(
+            (slot) => {
+                const state = getTeeSlotState(slot);
+                return (
+                    state.key === "open" ||
+                    state.key === "booked"
+                );
+            }
+        ).length;
+
+        const reservedPlayers = teeTimes.reduce(
+            (total, slot) =>
+                total +
+                (Number(slot.reserved_players) || 0),
+            0
+        );
+
+        const totalCapacity = teeTimes.reduce(
+            (total, slot) =>
+                total + (Number(slot.capacity) || 0),
+            0
+        );
+
+        const occupancy =
+            totalCapacity > 0
+                ? Math.round(
+                    (reservedPlayers / totalCapacity) * 100
+                )
+                : 0;
+
+        const onlineRevenue = activeBookings
+            .filter(
+                (booking) =>
+                    booking.payment_status === "paid"
+            )
+            .reduce(
+                (total, booking) =>
+                    total +
+                    getBookingPaymentSummary(booking)
+                        .amountValue,
+                0
+            );
+
+        const dueAtCourse = activeBookings
+            .filter(
+                (booking) =>
+                    booking.payment_method ===
+                        "pay_at_course"
+            )
+            .reduce(
+                (total, booking) =>
+                    total +
+                    getBookingPaymentSummary(booking)
+                        .amountValue,
+                0
+            );
+
+        const blockedSlots = teeTimes.filter(
+            (slot) =>
+                getTeeSlotState(slot).key === "blocked"
+        ).length;
+
+        const dashboardCurrency =
+            courseSettingsById.values().next().value
+                ?.currency || "usd";
+
+        const visibleTeeTimes = getVisibleTeeTimes();
+
+        resultsCount.textContent =
+            teeSheetFilter === "all"
+                ? `${teeTimes.length} tee ` +
+                    `${teeTimes.length === 1 ? "time" : "times"}`
+                : `${visibleTeeTimes.length} of ${teeTimes.length} times`;
+
+        const summary = document.createElement("div");
+        summary.className = "tee-sheet-summary";
+        summary.appendChild(
+            createTeeSheetMetric(
+                "Occupancy",
+                `${occupancy}%`
+            )
+        );
+        summary.appendChild(
+            createTeeSheetMetric(
+                "Golfers reserved",
+                reservedPlayers
+            )
+        );
+        summary.appendChild(
+            createTeeSheetMetric(
+                "Online revenue",
+                formatCurrency(
+                    onlineRevenue,
+                    dashboardCurrency
+                )
+            )
+        );
+        summary.appendChild(
+            createTeeSheetMetric(
+                "Due at course",
+                formatCurrency(
+                    dueAtCourse,
+                    dashboardCurrency
+                )
+            )
+        );
+        summary.appendChild(
+            createTeeSheetMetric(
+                "Open times",
+                availableSlots
+            )
+        );
+        summary.appendChild(
+            createTeeSheetMetric(
+                "Blocked",
+                blockedSlots
+            )
+        );
+        bookingArea.appendChild(summary);
+
+        if (teeTimes.length === 0) {
+            const emptyState = document.createElement("div");
+            emptyState.className = "empty-state";
+
+            const content = document.createElement("div");
+            const heading = document.createElement("h3");
+            const description = document.createElement("p");
+
+            heading.textContent = "No tee times scheduled";
+            description.textContent =
+                "Choose another date or add tee times for this course.";
+
+            content.appendChild(heading);
+            content.appendChild(description);
+            emptyState.appendChild(content);
+            bookingArea.appendChild(emptyState);
+            return;
+        }
+
+        if (visibleTeeTimes.length === 0) {
+            const emptyState = document.createElement("div");
+            emptyState.className = "empty-state";
+
+            const content = document.createElement("div");
+            const heading = document.createElement("h3");
+            const description = document.createElement("p");
+
+            heading.textContent =
+                "No matching tee times";
+            description.textContent =
+                "Choose another status filter to review this day.";
+
+            content.appendChild(heading);
+            content.appendChild(description);
+            emptyState.appendChild(content);
+            bookingArea.appendChild(emptyState);
+            return;
+        }
+
+        for (const slot of visibleTeeTimes) {
+            const slotCard = document.createElement("article");
+            slotCard.className = "tee-slot";
+
+            const timeBlock = document.createElement("div");
+            timeBlock.className = "tee-slot-time";
+
+            const time = document.createElement("strong");
+            time.textContent =
+                formatRequestedTime(slot.tee_time);
+
+            const date = document.createElement("span");
+            date.textContent =
+                formatRequestedDate(slot.tee_date);
+
+            const state = getTeeSlotState(slot);
+            slotCard.dataset.state = state.key;
+            const status = document.createElement("span");
+            status.className =
+                `tee-slot-status ${state.key}`;
+            status.textContent = state.label;
+
+            timeBlock.appendChild(time);
+            timeBlock.appendChild(date);
+            timeBlock.appendChild(status);
+
+            const capacityBlock = document.createElement("div");
+            capacityBlock.className = "tee-slot-capacity";
+
+            const capacity = Number(slot.capacity) || 0;
+            const reserved =
+                Number(slot.reserved_players) || 0;
+            const remaining = Math.max(
+                0,
+                capacity - reserved
+            );
+
+            const capacityHeading =
+                document.createElement("strong");
+            capacityHeading.textContent =
+                `${reserved} of ${capacity} golfers booked`;
+
+            const capacityCopy =
+                document.createElement("span");
+            capacityCopy.textContent =
+                slot.status === "blocked"
+                    ? "Unavailable for booking"
+                    : `${remaining} spot${remaining === 1 ? "" : "s"} remaining`;
+
+            capacityBlock.appendChild(capacityHeading);
+            capacityBlock.appendChild(capacityCopy);
+
+            const slotBookings = getSlotBookings(slot);
+            const bookingList = document.createElement("div");
+            bookingList.className = "tee-slot-bookings";
+
+            if (slotBookings.length === 0) {
+                const empty = document.createElement("div");
+                empty.className = "tee-slot-empty";
+                empty.textContent =
+                    "No active customer bookings for this time.";
+                bookingList.appendChild(empty);
+            } else {
+                for (const booking of slotBookings) {
+                    bookingList.appendChild(
+                        createTeeSheetBookingRow(booking)
+                    );
+                }
+            }
+
+            slotCard.appendChild(timeBlock);
+            slotCard.appendChild(capacityBlock);
+            slotCard.appendChild(bookingList);
+            bookingArea.appendChild(slotCard);
+        }
+    }
+
+
+    function renderActiveView() {
+        if (activeFilter === "tee_sheet") {
+            renderTeeSheet();
+            return;
+        }
+
+        renderBookings();
+    }
+
+
     function renderBookings() {
         const filteredBookings =
             getFilteredBookings();
@@ -2876,6 +3868,78 @@
     }
 
 
+    function showTeeSheetLoadingState() {
+        bookingArea.replaceChildren();
+
+        const emptyState = document.createElement("div");
+        emptyState.className = "empty-state";
+
+        const content = document.createElement("div");
+        const heading = document.createElement("h3");
+        const description = document.createElement("p");
+
+        heading.textContent = "Loading the tee sheet";
+        description.textContent =
+            "CoursePilot is retrieving availability and reservations.";
+
+        content.appendChild(heading);
+        content.appendChild(description);
+        emptyState.appendChild(content);
+        bookingArea.appendChild(emptyState);
+    }
+
+
+    async function loadTeeSheet() {
+        const selectedDate = teeSheetDate.value;
+
+        if (!selectedDate) {
+            teeTimes = [];
+            renderTeeSheet();
+            return false;
+        }
+
+        showTeeSheetLoadingState();
+        refreshButton.disabled = true;
+
+        try {
+            const { data, error } =
+                await supabase
+                    .from("tee_times")
+                    .select(
+                        "id, course_id, tee_date, tee_time, capacity, reserved_players, status"
+                    )
+                    .eq("tee_date", selectedDate)
+                    .order(
+                        "tee_time",
+                        { ascending: true }
+                    );
+
+            if (error) {
+                throw error;
+            }
+
+            teeTimes = data || [];
+            renderTeeSheet();
+            return true;
+        } catch (error) {
+            console.error(
+                "Tee sheet load failed:",
+                error
+            );
+
+            teeTimes = [];
+            renderTeeSheet();
+            showToast(
+                "The tee sheet could not be loaded.",
+                "error"
+            );
+            return false;
+        } finally {
+            refreshButton.disabled = false;
+        }
+    }
+
+
     async function loadBookings() {
         showLoadingState();
         refreshButton.disabled = true;
@@ -2885,7 +3949,7 @@
                 await supabase
                     .from("bookings")
                     .select(
-                        "id, name, day, time, players, customer_phone, holes, payment_method, payment_status, estimated_total, checkout_total, checkout_currency, paid_amount, paid_currency, status, created_at, viewed_at, course_id"
+                        "id, name, day, time, players, customer_phone, holes, payment_method, payment_status, estimated_total, checkout_total, checkout_currency, paid_amount, paid_currency, status, reservation_status, created_at, viewed_at, course_id"
                     )
                     .order(
                         "created_at",
@@ -2902,7 +3966,7 @@
 
                 bookings = [];
                 updateCounts();
-                renderBookings();
+                renderActiveView();
 
                 showToast(
                     "Bookings could not be loaded.",
@@ -2921,8 +3985,41 @@
                 })
             );
 
+            const {
+                data: settingsData,
+                error: settingsError
+            } = await supabase
+                .from("course_public_settings")
+                .select(
+                    "course_id, sales_tax_rate, currency"
+                );
+
+            if (settingsError) {
+                console.warn(
+                    "Course payment settings could not be loaded:",
+                    settingsError
+                );
+                courseSettingsById = new Map();
+            } else {
+                courseSettingsById = new Map(
+                    (settingsData || []).map(
+                        (settings) => [
+                            settings.course_id,
+                            {
+                                sales_tax_rate: Number(
+                                    settings.sales_tax_rate
+                                ),
+                                currency: String(
+                                    settings.currency || ""
+                                ).toLowerCase()
+                            }
+                        ]
+                    )
+                );
+            }
+
             updateCounts();
-            renderBookings();
+            renderActiveView();
 
             return true;
         } catch (error) {
@@ -2933,7 +4030,7 @@
 
             bookings = [];
             updateCounts();
-            renderBookings();
+            renderActiveView();
 
             showToast(
                 "An unexpected booking error occurred.",
@@ -3222,7 +4319,7 @@
 
     tabs.addEventListener(
         "click",
-        (event) => {
+        async (event) => {
             const button =
                 event.target.closest(
                     ".tab-button"
@@ -3248,6 +4345,13 @@
 
             button.classList.add("active");
 
+            updateManagerViewControls();
+
+            if (activeFilter === "tee_sheet") {
+                await loadTeeSheet();
+                return;
+            }
+
             renderBookings();
         }
     );
@@ -3255,18 +4359,92 @@
 
     searchInput.addEventListener(
         "input",
-        renderBookings
+        renderActiveView
+    );
+
+
+    teeSheetDate.addEventListener(
+        "change",
+        async () => {
+            if (activeFilter === "tee_sheet") {
+                await loadTeeSheet();
+            }
+        }
+    );
+
+
+    previousTeeSheetDate.addEventListener(
+        "click",
+        async () => {
+            teeSheetDate.value = shiftDateValue(
+                teeSheetDate.value,
+                -1
+            );
+            await loadTeeSheet();
+        }
+    );
+
+
+    todayTeeSheetDate.addEventListener(
+        "click",
+        async () => {
+            teeSheetDate.value = getTodayDateValue();
+            await loadTeeSheet();
+        }
+    );
+
+
+    nextTeeSheetDate.addEventListener(
+        "click",
+        async () => {
+            teeSheetDate.value = shiftDateValue(
+                teeSheetDate.value,
+                1
+            );
+            await loadTeeSheet();
+        }
+    );
+
+
+    teeSheetFilterBar.addEventListener(
+        "click",
+        (event) => {
+            const button = event.target.closest(
+                "[data-tee-sheet-filter]"
+            );
+
+            if (!button) {
+                return;
+            }
+
+            teeSheetFilter =
+                button.dataset.teeSheetFilter;
+            updateTeeSheetFilterButtons();
+            renderTeeSheet();
+        }
     );
 
 
     refreshButton.addEventListener(
         "click",
         async () => {
-            const refreshed =
+            const bookingsRefreshed =
                 await loadBookings();
 
-            if (refreshed) {
-                showToast("Bookings refreshed.");
+            const teeSheetRefreshed =
+                activeFilter === "tee_sheet"
+                    ? await loadTeeSheet()
+                    : true;
+
+            if (
+                bookingsRefreshed &&
+                teeSheetRefreshed
+            ) {
+                showToast(
+                    activeFilter === "tee_sheet"
+                        ? "Tee sheet refreshed."
+                        : "Bookings refreshed."
+                );
             }
         }
     );

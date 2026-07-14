@@ -308,15 +308,9 @@ Deno.serve(async (request) => {
         "SUPABASE_SERVICE_ROLE_KEY"
     );
 
-    const publishableKey = getDefaultKey(
-        "SUPABASE_PUBLISHABLE_KEYS",
-        "SUPABASE_ANON_KEY"
-    );
-
     if (
         !supabaseUrl ||
-        !secretKey ||
-        !publishableKey
+        !secretKey
     ) {
         console.error(
             "Booking API is missing required server configuration."
@@ -339,12 +333,6 @@ Deno.serve(async (request) => {
     const supabaseAdmin = createClient(
         supabaseUrl,
         secretKey,
-        clientOptions
-    );
-
-    const supabasePublic = createClient(
-        supabaseUrl,
-        publishableKey,
         clientOptions
     );
 
@@ -420,7 +408,7 @@ Deno.serve(async (request) => {
         const provider = getBookingProvider(
             integration.provider_key,
             {
-                supabaseClient: supabasePublic,
+                supabaseClient: supabaseAdmin,
                 externalCourseId:
                     integration.external_course_id
             }

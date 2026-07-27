@@ -1,5 +1,6 @@
 import {
-    createClient
+    createClient,
+    type SupabaseClient
 } from "npm:@supabase/supabase-js@2.110.2";
 
 import {
@@ -13,8 +14,11 @@ import {
 
 const OPENAI_MODEL = "gpt-5.6-luna";
 const MAX_MESSAGE_LENGTH = 600;
-const RATE_LIMIT_REQUESTS = 8;
-const RATE_LIMIT_WINDOW_MS = 60_000;
+const IP_RATE_LIMIT_WINDOW_SECONDS = 60;
+const DAILY_RATE_LIMIT_WINDOW_SECONDS = 86_400;
+const DEFAULT_IP_REQUEST_LIMIT = 8;
+const DEFAULT_COURSE_DAILY_LIMIT = 250;
+const DEFAULT_GLOBAL_DAILY_LIMIT = 1_000;
 
 const UUID_PATTERN =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -26,13 +30,6 @@ const ALLOWED_ORIGINS =
         "http://127.0.0.1:5173",
         "http://localhost:5173"
     ]);
-
-const rateLimitBuckets =
-    new Map<string, {
-        count: number;
-        resetAt: number;
-    }>();
-
 
 type ReceptionistRequest = {
     course_id?: unknown;
@@ -61,6 +58,13 @@ type OpenAIResponse = {
             text?: unknown;
         }>;
     }>;
+};
+
+
+type RateLimitResult = {
+    allowed: boolean;
+    remaining: number;
+    retryAfterSeconds: number;
 };
 
 
@@ -133,48 +137,74 @@ function getClientIdentifier(request: Request) {
 }
 
 
-function getRateLimitResult(identifier: string) {
-    const now = Date.now();
-    const bucket = rateLimitBuckets.get(identifier);
+function getPositiveIntegerSetting(
+    name: string,
+    fallback: number,
+    maximum: number
+) {
+    const parsed = Number(Deno.env.get(name));
 
-    if (!bucket || bucket.resetAt <= now) {
-        rateLimitBuckets.set(
-            identifier,
-            {
-                count: 1,
-                resetAt: now + RATE_LIMIT_WINDOW_MS
-            }
-        );
+    return Number.isInteger(parsed) &&
+        parsed >= 1 &&
+        parsed <= maximum
+        ? parsed
+        : fallback;
+}
 
-        return {
-            allowed: true,
-            retryAfterSeconds: 0
-        };
-    }
 
-    if (bucket.count >= RATE_LIMIT_REQUESTS) {
-        return {
-            allowed: false,
-            retryAfterSeconds: Math.max(
-                1,
-                Math.ceil((bucket.resetAt - now) / 1000)
-            )
-        };
-    }
+async function hashIdentifier(identifier: string) {
+    const digest = await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(identifier)
+    );
 
-    bucket.count += 1;
+    return Array.from(new Uint8Array(digest))
+        .map((byte) => byte.toString(16).padStart(2, "0"))
+        .join("");
+}
 
-    if (rateLimitBuckets.size > 1_000) {
-        for (const [key, value] of rateLimitBuckets) {
-            if (value.resetAt <= now) {
-                rateLimitBuckets.delete(key);
-            }
+
+async function consumeRateLimit(
+    supabase: SupabaseClient,
+    scope: string,
+    identifier: string,
+    windowSeconds: number,
+    requestLimit: number
+): Promise<RateLimitResult> {
+    const identifierHash = await hashIdentifier(identifier);
+    const {
+        data,
+        error
+    } = await supabase.rpc(
+        "consume_edge_rate_limit",
+        {
+            p_scope: scope,
+            p_identifier_hash: identifierHash,
+            p_window_seconds: windowSeconds,
+            p_request_limit: requestLimit
         }
+    );
+
+    const result = Array.isArray(data)
+        ? data[0]
+        : null;
+
+    if (
+        error ||
+        !result ||
+        typeof result.allowed !== "boolean" ||
+        typeof result.remaining !== "number" ||
+        typeof result.retry_after_seconds !== "number"
+    ) {
+        throw new Error(
+            error?.message || "Invalid rate-limit response."
+        );
     }
 
     return {
-        allowed: true,
-        retryAfterSeconds: 0
+        allowed: result.allowed,
+        remaining: result.remaining,
+        retryAfterSeconds: result.retry_after_seconds
     };
 }
 
@@ -239,10 +269,84 @@ Deno.serve(async (request) => {
         );
     }
 
-    const rateLimitResult =
-        getRateLimitResult(
-            getClientIdentifier(request)
+    const supabaseUrl =
+        Deno.env.get("SUPABASE_URL");
+
+    const serviceRoleKey =
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    const publishableKey = getDefaultKey(
+        "SUPABASE_PUBLISHABLE_KEYS",
+        "SUPABASE_ANON_KEY"
+    );
+
+    const openAiApiKey =
+        Deno.env.get("OPENAI_API_KEY");
+
+    if (
+        !supabaseUrl ||
+        !serviceRoleKey ||
+        !publishableKey ||
+        !openAiApiKey
+    ) {
+        console.error(
+            "AI receptionist is missing required server configuration."
         );
+
+        return jsonResponse(
+            origin,
+            {
+                error: "The receptionist is temporarily unavailable.",
+                code: "RECEPTIONIST_UNAVAILABLE"
+            },
+            503
+        );
+    }
+
+    const adminSupabase = createClient(
+        supabaseUrl,
+        serviceRoleKey,
+        {
+            auth: {
+                autoRefreshToken: false,
+                persistSession: false
+            }
+        }
+    );
+
+    const ipRequestLimit = getPositiveIntegerSetting(
+        "AI_RATE_LIMIT_PER_MINUTE",
+        DEFAULT_IP_REQUEST_LIMIT,
+        1_000
+    );
+
+    let rateLimitResult: RateLimitResult;
+
+    try {
+        rateLimitResult = await consumeRateLimit(
+            adminSupabase,
+            "ai:ip:minute",
+            getClientIdentifier(request),
+            IP_RATE_LIMIT_WINDOW_SECONDS,
+            ipRequestLimit
+        );
+    } catch (error) {
+        console.error(
+            "AI receptionist rate limiter failed:",
+            error instanceof Error
+                ? error.message
+                : "Unknown error"
+        );
+
+        return jsonResponse(
+            origin,
+            {
+                error: "The receptionist is temporarily unavailable.",
+                code: "RECEPTIONIST_UNAVAILABLE"
+            },
+            503
+        );
+    }
 
     if (!rateLimitResult.allowed) {
         return jsonResponse(
@@ -307,36 +411,6 @@ Deno.serve(async (request) => {
                 code: "INVALID_REQUEST"
             },
             400
-        );
-    }
-
-    const supabaseUrl =
-        Deno.env.get("SUPABASE_URL");
-
-    const publishableKey = getDefaultKey(
-        "SUPABASE_PUBLISHABLE_KEYS",
-        "SUPABASE_ANON_KEY"
-    );
-
-    const openAiApiKey =
-        Deno.env.get("OPENAI_API_KEY");
-
-    if (
-        !supabaseUrl ||
-        !publishableKey ||
-        !openAiApiKey
-    ) {
-        console.error(
-            "AI receptionist is missing required server configuration."
-        );
-
-        return jsonResponse(
-            origin,
-            {
-                error: "The receptionist is temporarily unavailable.",
-                code: "RECEPTIONIST_UNAVAILABLE"
-            },
-            503
         );
     }
 
@@ -454,6 +528,86 @@ Deno.serve(async (request) => {
                     code: "RECEPTIONIST_UNAVAILABLE"
                 },
                 503
+            );
+        }
+
+        const courseDailyLimit = getPositiveIntegerSetting(
+            "AI_DAILY_COURSE_LIMIT",
+            DEFAULT_COURSE_DAILY_LIMIT,
+            100_000
+        );
+        const globalDailyLimit = getPositiveIntegerSetting(
+            "AI_DAILY_GLOBAL_LIMIT",
+            DEFAULT_GLOBAL_DAILY_LIMIT,
+            100_000
+        );
+
+        let courseBudget: RateLimitResult;
+        let globalBudget: RateLimitResult;
+
+        try {
+            courseBudget = await consumeRateLimit(
+                adminSupabase,
+                "ai:course:day",
+                courseId,
+                DAILY_RATE_LIMIT_WINDOW_SECONDS,
+                courseDailyLimit
+            );
+
+            if (!courseBudget.allowed) {
+                return jsonResponse(
+                    origin,
+                    {
+                        error: "This course's receptionist has reached its daily request limit. Please contact the golf course directly.",
+                        code: "AI_DAILY_LIMIT_REACHED"
+                    },
+                    429,
+                    {
+                        "Retry-After": String(
+                            courseBudget.retryAfterSeconds
+                        )
+                    }
+                );
+            }
+
+            globalBudget = await consumeRateLimit(
+                adminSupabase,
+                "ai:global:day",
+                "coursepilot-global",
+                DAILY_RATE_LIMIT_WINDOW_SECONDS,
+                globalDailyLimit
+            );
+        } catch (error) {
+            console.error(
+                "AI receptionist budget limiter failed:",
+                error instanceof Error
+                    ? error.message
+                    : "Unknown error"
+            );
+
+            return jsonResponse(
+                origin,
+                {
+                    error: "The receptionist is temporarily unavailable.",
+                    code: "RECEPTIONIST_UNAVAILABLE"
+                },
+                503
+            );
+        }
+
+        if (!globalBudget.allowed) {
+            return jsonResponse(
+                origin,
+                {
+                    error: "The receptionist has reached its daily request limit. Please contact the golf course directly.",
+                    code: "AI_DAILY_LIMIT_REACHED"
+                },
+                429,
+                {
+                    "Retry-After": String(
+                        globalBudget.retryAfterSeconds
+                    )
+                }
             );
         }
 
